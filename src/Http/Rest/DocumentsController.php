@@ -250,6 +250,7 @@ class DocumentsController
         }
 
         $pipeline = new RenderPipeline();
+        $payload = $this->applyGeneratedIdentifiers($payload, $docTypeKey, (string) ($result['tracking_code'] ?? ''));
         $pdf = $pipeline->generateDocumentPdf($docTypeKey, $payload, $result);
 
         if (!$pdf['success']) {
@@ -290,8 +291,42 @@ class DocumentsController
             'engine_used' => $pdf['engine_used'] ?? ($pdf['selected_engine'] ?? 'tcpdf'),
             'engine_fallback' => $pdf['engine_fallback'] ?? null,
             'engine_fallback_reason' => $pdf['engine_fallback_reason'] ?? null,
+            'identifiers' => [
+                'document_number' => (string) ($payload['document_number'] ?? ''),
+                'invoice_number' => (string) ($payload['invoice_number'] ?? ''),
+                'receipt_number' => (string) ($payload['receipt_number'] ?? ''),
+                'deposit_number' => (string) ($payload['deposit_number'] ?? ''),
+                'reg_number' => (string) ($payload['reg_number'] ?? ''),
+            ],
             'message' => ucfirst($docTypeKey) . ' PDF generated successfully.',
         ], 201);
+    }
+
+    private function applyGeneratedIdentifiers(array $payload, string $docTypeKey, string $trackingCode): array
+    {
+        $trackingCode = strtoupper(preg_replace('/[^A-Z0-9]/', '', $trackingCode) ?: '');
+        if ($trackingCode === '') {
+            $trackingCode = strtoupper(wp_generate_password(8, false, false));
+        }
+
+        $datePart = current_time('Ymd');
+        $suffix = substr($trackingCode, -8);
+        if ($suffix === '') {
+            $suffix = strtoupper(wp_generate_password(8, false, false));
+        }
+
+        $payload['document_number'] = 'DOC-' . $datePart . '-' . $suffix;
+
+        if ($docTypeKey === 'invoice') {
+            $payload['invoice_number'] = 'INV-' . $datePart . '-' . $suffix;
+        } elseif ($docTypeKey === 'receipt') {
+            $payload['receipt_number'] = 'RCP-' . $datePart . '-' . $suffix;
+        } elseif ($docTypeKey === 'skr') {
+            $payload['deposit_number'] = 'ESL' . $datePart . substr($suffix, 0, 4);
+            $payload['reg_number'] = 'ESL-A-' . substr($suffix, -3);
+        }
+
+        return $payload;
     }
 
     /**

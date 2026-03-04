@@ -3,8 +3,6 @@
 const payloadDefaults = {
     invoice: {
       company_logo_url: "https://inds.soothingspotspa.care/wp-content/uploads/2026/02/WakalaNew.png",
-      invoice_number: "INV-20260222-0001",
-      document_number: "DOC-20260222-0001",
       invoice_date: "2026-02-22",
       client_name: "Preview Client",
       client_email: "preview@example.com",
@@ -33,7 +31,6 @@ const payloadDefaults = {
     receipt: {
       company_logo_url: "https://inds.soothingspotspa.care/wp-content/uploads/2026/02/WakalaNew.png",
       receipt_title: "PAYMENT RECEIPT",
-      receipt_number: "RCP-20260222-0001",
       receipt_date: "2026-02-22",
       client_name: "Preview Client",
       client_email: "preview@example.com",
@@ -73,13 +70,11 @@ const payloadDefaults = {
       depositor_name: "Preview Client",
       client_email: "preview@example.com",
       client_address: "123 Preview Street, Demo City",
-      deposit_number: "ESL20260205176",
       projected_days: 30,
       documented_custom_value: "T.B.A",
       represented_date: "",
       represented_by: "N/A",
       receiving_officer: "MR.KIMBUGWE FAISAL",
-      reg_number: "ESL-A-205",
       content_description: "Raw Gold",
       quantity: 250,
       unit: "KGS",
@@ -108,8 +103,6 @@ const payloadDefaults = {
   const fallbackSchemas = {
     invoice: [
       { key: "company_logo_url", label: "Company Logo URL", type: "url", required: false },
-      { key: "invoice_number", label: "Invoice Number", type: "text", required: false },
-      { key: "document_number", label: "Document Number", type: "text", required: false },
       { key: "invoice_date", label: "Invoice Date", type: "date", required: false },
       { key: "client_name", label: "Client Name", type: "text", required: true },
       { key: "client_email", label: "Client Email", type: "email", required: true },
@@ -138,7 +131,6 @@ const payloadDefaults = {
     receipt: [
       { key: "company_logo_url", label: "Company Logo URL", type: "url", required: false },
       { key: "receipt_title", label: "Receipt Title", type: "text", required: false },
-      { key: "receipt_number", label: "Receipt Number", type: "text", required: false },
       { key: "receipt_date", label: "Receipt Date", type: "date", required: false },
       { key: "client_name", label: "Client Name", type: "text", required: true },
       { key: "client_email", label: "Client Email", type: "email", required: true },
@@ -174,14 +166,12 @@ const payloadDefaults = {
       { key: "depositor_name", label: "Depositor Name", type: "text", required: true },
       { key: "client_email", label: "Email Address", type: "email", required: true },
       { key: "client_address", label: "Depositor Address", type: "textarea", required: false },
-      { key: "deposit_number", label: "Deposit Number", type: "text", required: false },
       { key: "custody_type", label: "Custody Type", type: "text", required: true },
       { key: "projected_days", label: "Projected Days of Custody", type: "number", required: false },
       { key: "documented_custom_value", label: "Documented Custom Value (US$)", type: "text", required: false },
       { key: "represented_date", label: "Represented Date", type: "date", required: false },
       { key: "represented_by", label: "Represented By", type: "text", required: false },
       { key: "receiving_officer", label: "Receiving Officer", type: "text", required: false },
-      { key: "reg_number", label: "Reg Number", type: "text", required: false },
       { key: "watermark_enabled", label: "Enable Watermark", type: "checkbox", required: false },
       { key: "skr_watermark_enabled", label: "Enable SKR Watermark (Legacy)", type: "checkbox", required: false },
       { key: "content_description", label: "Description of Contents", type: "text", required: true },

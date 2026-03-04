@@ -21,12 +21,10 @@ const skrFormSections = [
       fields: [
         "custody_type",
         "projected_days",
-        "deposit_number",
         "documented_custom_value",
         "represented_date",
         "represented_by",
         "receiving_officer",
-        "reg_number",
       ],
     },
     {
@@ -59,8 +57,8 @@ const skrFormSections = [
   const invoiceFormSections = [
     {
       key: "branding",
-      title: "Branding and IDs",
-      fields: ["company_logo_url", "invoice_number", "document_number", "invoice_date", "watermark_enabled"],
+      title: "Branding",
+      fields: ["company_logo_url", "invoice_date", "watermark_enabled"],
     },
     {
       key: "client",
@@ -82,7 +80,7 @@ const skrFormSections = [
     {
       key: "branding",
       title: "Branding and Header",
-      fields: ["company_logo_url", "receipt_title", "receipt_number", "receipt_date", "watermark_enabled"],
+      fields: ["company_logo_url", "receipt_title", "receipt_date", "watermark_enabled"],
     },
     {
       key: "client",

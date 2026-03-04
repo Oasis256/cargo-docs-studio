@@ -2,6 +2,13 @@
 
 All notable changes to CargoDocs Studio are documented here.
 
+## 0.1.3
+
+### Changed
+
+- Enforced server-side auto-generation of document identifiers (`invoice_number`, `receipt_number`, `document_number`, `deposit_number`, `reg_number`).
+- Removed manual identifier fields from admin document forms/default schemas.
+
 ## 0.1.2
 
 ### Fixed
