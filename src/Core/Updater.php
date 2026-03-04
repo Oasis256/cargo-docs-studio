@@ -25,6 +25,7 @@ class Updater
     public function register(): void
     {
         add_filter('pre_set_site_transient_update_plugins', [$this, 'injectUpdate']);
+        add_filter('site_transient_update_plugins', [$this, 'injectUpdate']);
         add_filter('plugins_api', [$this, 'pluginsApi'], 20, 3);
         add_action('upgrader_process_complete', [$this, 'clearCacheAfterUpgrade'], 10, 2);
     }
@@ -44,10 +45,6 @@ class Updater
         }
 
         $latest = (string) ($release['tag_name'] ?? '');
-        if (!$this->versions->isNewer($latest, CDS_VERSION)) {
-            return $transient;
-        }
-
         $newVersion = $this->versions->normalizeTagVersion($latest);
         if ($newVersion === '') {
             return $transient;
@@ -64,7 +61,23 @@ class Updater
         $update->requires = '6.5';
         $update->requires_php = '8.1';
 
-        $transient->response[$this->pluginBasename] = $update;
+        if (!isset($transient->response) || !is_array($transient->response)) {
+            $transient->response = [];
+        }
+        if (!isset($transient->no_update) || !is_array($transient->no_update)) {
+            $transient->no_update = [];
+        }
+
+        if ($this->versions->isNewer($latest, CDS_VERSION)) {
+            $transient->response[$this->pluginBasename] = $update;
+            unset($transient->no_update[$this->pluginBasename]);
+            return $transient;
+        }
+
+        $update->new_version = CDS_VERSION;
+        $update->package = '';
+        $transient->no_update[$this->pluginBasename] = $update;
+        unset($transient->response[$this->pluginBasename]);
 
         return $transient;
     }

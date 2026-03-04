@@ -75,7 +75,9 @@ class PackageCommand
             if (preg_match('/\.zip$/i', $relative)) {
                 continue;
             }
-            $zip->addFile($fullPath, $pluginSlug . '/' . $relative);
+            // ZIP archives must use forward slashes as internal path separators.
+            $zipPath = $pluginSlug . '/' . str_replace('\\', '/', $relative);
+            $zip->addFile($fullPath, $zipPath);
             $count++;
         }
 

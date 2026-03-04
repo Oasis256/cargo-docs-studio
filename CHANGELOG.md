@@ -2,6 +2,14 @@
 
 All notable changes to CargoDocs Studio are documented here.
 
+## 0.1.2
+
+### Fixed
+
+- Packaging now writes ZIP entries with forward slashes for cloud-host compatibility.
+- Updater now always registers plugin update state (`response`/`no_update`) so auto-update UI can appear consistently.
+- Database schema SQL definitions normalized for safer `dbDelta` parsing during activation/migration.
+
 ## 0.1.1
 
 ### Changed
