@@ -1,0 +1,21 @@
+# Changelog
+
+All notable changes to CargoDocs Studio are documented here.
+
+## 0.1.0
+
+### Added
+
+- Configurable template studio for `invoice`, `receipt`, and `skr`.
+- PDF engine toggle with runtime diagnostics and fallback metadata.
+- Documents generator admin page with validation, auto-fix, and template revision selection.
+- Tracking and payment QR support in generated documents.
+- Structured REST error responses with field-level metadata.
+- Shared admin REST client (`assets/admin/api.js`) for consistent error handling.
+- Recent documents pagination and search.
+- Template revision safety tooling: duplicate, rollback publish, and compare report.
+- Public tracking endpoint rate limiting.
+- Payload/structure guardrails for generation and preview requests.
+- Retention policy with daily cleanup cron and manual cleanup trigger.
+- Audit repository, audit REST endpoint, and audit admin view.
+- QA checklist, migration notes, and production runbook documentation.

@@ -1,0 +1,63 @@
+name: Release Plugin
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          tools: composer:v2
+
+      - name: Validate Composer metadata
+        run: composer validate --no-check-publish --strict
+
+      - name: PHP syntax checks
+        run: |
+          find src -type f -name "*.php" -print0 | xargs -0 -n1 php -l
+          php -l cargo-docs-studio.php
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: JS syntax checks
+        run: |
+          find assets -type f -name "*.js" -print0 | xargs -0 -n1 node --check
+
+      - name: Build runtime ZIP
+        run: |
+          mkdir -p dist
+          rsync -a ./ ./dist/cargo-docs-studio/ \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '.idea' \
+            --exclude '.vscode' \
+            --exclude 'checkpoints' \
+            --exclude 'dist' \
+            --exclude '*.zip' \
+            --exclude 'wp-cli.phar'
+          cd dist
+          zip -r cargo-docs-studio.zip cargo-docs-studio
+          cd ..
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/cargo-docs-studio.zip
+          generate_release_notes: true
+
