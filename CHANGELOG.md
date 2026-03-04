@@ -2,6 +2,12 @@
 
 All notable changes to CargoDocs Studio are documented here.
 
+## 0.1.1
+
+### Changed
+
+- Version bump for GitHub-tagged release flow.
+
 ## 0.1.0
 
 ### Added

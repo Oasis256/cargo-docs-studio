@@ -3,7 +3,7 @@
  * Plugin Name: CargoDocs Studio
  * Plugin URI: https://example.com
  * Description: Configurable multi-document PDF system for invoice, receipt, SKR, and cargo tracking QR workflows.
- * Version: 0.1.0
+ * Version: 0.1.1
  * Author: CargoDocs
  * License: GPLv2 or later
  * Update URI: https://github.com/Oasis256/cargo-docs-studio
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('CDS_VERSION', '0.1.0');
+define('CDS_VERSION', '0.1.1');
 define('CDS_PLUGIN_FILE', __FILE__);
 define('CDS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CDS_PLUGIN_URL', plugin_dir_url(__FILE__));
