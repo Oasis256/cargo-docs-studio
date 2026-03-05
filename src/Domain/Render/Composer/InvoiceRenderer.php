@@ -228,10 +228,10 @@ body{font-family:' . esc_attr($theme['font_family']) . ',Arial,sans-serif;margin
   </tr>
 </table>
 
-<table class="bank-qr-table">
+<table class="bank-qr-table" style="margin:45% 0 0 0;">
   <tr>
     <td style="width:60%;text-align:left;vertical-align:top;">
-    <br><br><br><br>
+  
       <div style="font-size:10pt;line-height:2;color:#333;">
         <strong>BANK NAME:</strong> ' . esc_html($bankName) . '<br>
         <strong>ACCOUNT NUMBER:</strong> ' . esc_html($bankAccountNumber) . '<br>
@@ -241,7 +241,7 @@ body{font-family:' . esc_attr($theme['font_family']) . ',Arial,sans-serif;margin
       </div>
     </td>
     <td style="width:15%;text-align:right;">
-    <br><br><br>
+    
       <strong>NETWORK:</strong>'. esc_html($paymentNetwork) .'<br>
       ' . ($paymentQrSource !== '' ? '<img src="' . esc_attr($paymentQrSource) . '" style="width:120px;height:120px;border:1px solid #ddd;" alt="Payment QR" />' : '') . '<br>
       <strong>ADDRESS:</strong>'. esc_html($paymentAddress) .'
@@ -253,13 +253,13 @@ body{font-family:' . esc_attr($theme['font_family']) . ',Arial,sans-serif;margin
 <div class="signature-block" style="text-align:left">
   <div style="margin-bottom:5px;">
     <strong>For and on behalf of</strong></div>
-  <div style="height:55px;min-height:55px;">&nbsp;</div>
+  <div style="height:10px;min-height:5px;">&nbsp;</div>
   <div style="border-top:1px solid #333;padding-top:1px;width:300px;margin:0;">
     <strong>' . esc_html((string) ($payload['company_name'] ?? 'WAKALA Minerals Limited')) . '</strong>
   </div>
 </div>
 
-<div style="border-top:2px solid #ff0000;margin:20px 0 10px 0;"></div>
+<div style="border-top:2px solid #ff0000;margin:20px 0 100px 0;"></div>
 <table style="width:100%;border-collapse:collapse;font-size:9pt;color:#333;">
   <tr>
     <td style="width:33%;text-align:left;vertical-align:top;padding:5px;"><strong>☎ ' . esc_html((string) ($payload['company_phone'] ?? '+256-751896060')) . '</strong></td>

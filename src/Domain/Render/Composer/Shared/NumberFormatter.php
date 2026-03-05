@@ -84,12 +84,14 @@ class NumberFormatter
         $major = $this->currencyMajorUnit($currency);
         $minor = $this->currencyMinorUnit($currency);
 
-        $words = ($negative ? 'minus ' : '') . $this->numberToWords($whole) . ' ' . ($whole === 1 ? rtrim($major, 's') : $major);
+        $wholeWords = $this->capitalizeWordTokens($this->numberToWords($whole));
+        $words = ($negative ? 'minus ' : '') . $wholeWords . ' ' . ($whole === 1 ? rtrim($major, 's') : $major);
         if ($fraction > 0) {
-            $words .= ' and ' . $this->numberToWords($fraction) . ' ' . ($fraction === 1 ? rtrim($minor, 's') : $minor);
+            $fractionWords = $this->capitalizeWordTokens($this->numberToWords($fraction));
+            $words .= ' and ' . $fractionWords . ' ' . ($fraction === 1 ? rtrim($minor, 's') : $minor);
         }
 
-        return ucfirst($words);
+        return $words;
     }
 
     public function numberToWords(int $number): string
@@ -143,5 +145,14 @@ class NumberFormatter
             'UGX' => 'cents',
             default => 'cents',
         };
+    }
+
+    private function capitalizeWordTokens(string $text): string
+    {
+        return (string) preg_replace_callback(
+            '/\b[a-z]/',
+            static fn (array $matches): string => strtoupper($matches[0]),
+            $text
+        );
     }
 }

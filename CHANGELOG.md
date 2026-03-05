@@ -2,6 +2,13 @@
 
 All notable changes to CargoDocs Studio are documented here.
 
+## 0.1.5
+
+### Changed
+
+- Capitalized numeric words in totals-in-words output for generated documents.
+- Adjusted invoice footer/banking block spacing for improved fixed-page positioning.
+
 ## 0.1.4
 
 ### Changed
