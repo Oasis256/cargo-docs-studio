@@ -116,6 +116,7 @@ class ReceiptRenderer
     </tr>';
         }
         $displayTotal = $amount > 0 ? $amount : $itemsTotal;
+        $displayTotalWords = $this->formatter->moneyToWords($displayTotal, $currency);
 
         return '
 <!doctype html>
@@ -127,6 +128,7 @@ body{font-family:' . esc_attr($theme['font_family']) . ',Arial,sans-serif;margin
 .sheet{position:relative;padding:14px;}
 .watermark{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);width:56%;max-width:140mm;opacity:0.2;z-index:0;pointer-events:none;}
 .content{position:relative;z-index:1;}
+.content-main{padding-bottom:110px;}
 .header-table,.grid-table,.commodity-table,.foot-table{width:100%;border-collapse:collapse;}
 .header-table td{vertical-align:top;border:none;padding:0;}
 .header-wrap{position:relative;min-height:230px;margin-bottom:4px;}
@@ -144,6 +146,9 @@ body{font-family:' . esc_attr($theme['font_family']) . ',Arial,sans-serif;margin
 .commodity-table{margin:12px 0;}
 .commodity-table th{background:#d2a272;color:#1f3550;font-weight:700;padding:8px 10px;border:1px solid #bbb;text-align:center;}
 .commodity-table td{padding:7px 10px;border:1px solid #ddd;}
+.receipt-total-row td{background:#d2a272;color:#fff;font-weight:700;}
+.receipt-total-row .amount-right{font-size:14pt;}
+.receipt-total-words-row td{background:#d2a272;color:#fff;font-weight:700;text-align:left;}
 .amount-right{text-align:right;}
 .center{text-align:center;}
 .total-line{margin-top:8px;text-align:right;font-size:21pt;font-weight:700;color:#111;}
@@ -160,12 +165,14 @@ body{font-family:' . esc_attr($theme['font_family']) . ',Arial,sans-serif;margin
 .contact-bar .line-1{font-size:10pt;text-align:center;}
 .contact-bar .line-2{font-size:10pt;text-align:center;margin-top:4px;}
 .bottom-note{margin-top:8px;text-align:center;font-style:italic;font-size:11pt;}
+.receipt-footer{position:fixed;left:14px;right:14px;bottom:6mm;z-index:2;}
 </style>
 </head>
 <body>
 <div class="sheet">
 ' . ($watermarkUrl !== '' ? '<img src="' . esc_attr($watermarkUrl) . '" class="watermark" alt="" />' : '') . '
 <div class="content">
+  <div class="content-main">
   <div class="header-wrap">
     <div class="header-center">
       ' . ($logoUrl !== '' ? '<img src="' . esc_attr($logoUrl) . '" class="logo" alt="Company Logo" />' : '') . '
@@ -195,8 +202,14 @@ body{font-family:' . esc_attr($theme['font_family']) . ',Arial,sans-serif;margin
       <th style="width:24%;">Amount (USD)</th>
     </tr>
     ' . $rowsHtml . '
+    <tr class="receipt-total-row">
+      <td colspan="3" class="center">TOTAL (' . esc_html($currency) . ')</td>
+      <td class="amount-right">$' . $this->formatter->formatSmart($displayTotal, 2) . '</td>
+    </tr>
+    <tr class="receipt-total-words-row">
+      <td colspan="4"><strong>' . esc_html($displayTotalWords) . ' only.</strong></td>
+    </tr>
   </table>
-  <div class="total-line">TOTAL (' . esc_html($currency) . '): $' . $this->formatter->formatSmart($displayTotal, 2) . '</div>
 
   ' . ($notes !== '' ? '<div class="sec-head">Special notes and Instructions</div><div class="sec-body muted">' . nl2br(esc_html($notes)) . '</div>' : '') . '
 
@@ -221,12 +234,14 @@ body{font-family:' . esc_attr($theme['font_family']) . ',Arial,sans-serif;margin
       </table>
     </div>
   </div>
-
+  </div>
+  <div class="receipt-footer">
   <div class="contact-bar">
     <div class="line-1">☎ ' . esc_html($companyPhone) . ' | ✉ ' . esc_html($companyEmail) . ' | ⌂ ' . esc_html($companyWebsite) . '</div>
     <div class="line-2">⌂ ' . nl2br(esc_html($companyAddress)) . '</div>
   </div>
   <div class="bottom-note">' . esc_html($wetStampNote) . '</div>
+  </div>
 </div>
 </div>
 </body>

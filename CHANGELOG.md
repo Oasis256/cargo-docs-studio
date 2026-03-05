@@ -2,6 +2,15 @@
 
 All notable changes to CargoDocs Studio are documented here.
 
+## 0.1.4
+
+### Changed
+
+- Added totals-in-words rendering for invoice and receipt outputs.
+- Moved total words into dedicated table rows matching total-row styling.
+- Updated receipt layout so footer block stays pinned to the page footer area.
+- Improved money formatting with smart decimal trimming and number-to-words helpers.
+
 ## 0.1.3
 
 ### Changed

@@ -83,6 +83,7 @@ class InvoiceRenderer
         if ($totalAmount <= 0) {
             $totalAmount = 0.0;
         }
+        $totalAmountWords = $this->formatter->moneyToWords($totalAmount, $currency);
 
         return '
 <!doctype html>
@@ -112,6 +113,7 @@ body{font-family:' . esc_attr($theme['font_family']) . ',Arial,sans-serif;margin
 .amount-column{text-align:right;}
 .total-row{background:#F4A460 !important;color:#fff;font-weight:700;font-size:12pt;}
 .total-row td{padding:12px 10px;}
+.total-words-row td{padding:8px 10px;font-size:10pt;text-align:left;color:#fff;}
 .network-section{font-size:9pt;color:#666;text-align:center;}
 .mono{font-family:monospace;font-size:9pt;word-break:break-all;}
 .bank-qr-table{width:100%;border-collapse:collapse;margin-top:10px;}
@@ -218,6 +220,11 @@ body{font-family:' . esc_attr($theme['font_family']) . ',Arial,sans-serif;margin
   <tr class="total-row">
     <td colspan="3" style="text-align:center;font-size:14pt;"><strong>TOTAL (' . esc_html($currency) . ')</strong></td>
     <td class="amount-column" style="font-size:14pt;"><strong>' . $this->formatter->formatSmart($totalAmount, 2) . '</strong></td>
+  </tr>
+  <tr class="total-row total-words-row">
+    <td colspan="4">
+      <strong>' . esc_html($totalAmountWords) . ' only.</strong>
+    </td>
   </tr>
 </table>
 
