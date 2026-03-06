@@ -2,6 +2,13 @@
 
 All notable changes to CargoDocs Studio are documented here.
 
+## 0.1.7
+
+### Changed
+
+- Reworked the project documentation structure so `README.md` now serves as a true user-facing plugin overview focused on installation, quick start, release commands, and document navigation.
+- Moved the former implementation-heavy README content into a dedicated technical reference document (`TECHNICAL.md`) to separate operator guidance from architecture and internal behavior notes.
+
 ## 0.1.6
 
 ### Changed
