@@ -90,7 +90,7 @@ const skrFormSections = [
     {
       key: "commodity",
       title: "Commodity",
-      fields: ["line_items", "amount_paid", "currency"],
+      fields: ["line_items", "currency"],
     },
     {
       key: "payment",

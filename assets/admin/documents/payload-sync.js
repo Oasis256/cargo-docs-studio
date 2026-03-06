@@ -99,9 +99,19 @@
       amount.className = "cds-line-item-input";
       amount.placeholder = "Amount";
       amount.setAttribute("data-line-item-field", "total");
-      amount.value = item && item.total != null && item.total !== ""
-        ? String(item.total)
-        : (item && item.amount != null && item.amount !== "" ? String(item.amount) : "");
+      let amountValue = "";
+      if (item && item.unit_price != null && item.unit_price !== "") {
+        amountValue = String(item.unit_price);
+      } else if (item && item.amount != null && item.amount !== "") {
+        amountValue = String(item.amount);
+      } else if (item && item.total != null && item.total !== "") {
+        const qty = Number(item.quantity || 0);
+        const totalRaw = Number(item.total);
+        amountValue = (Number.isFinite(qty) && qty > 0 && Number.isFinite(totalRaw))
+          ? String(totalRaw / qty)
+          : String(item.total);
+      }
+      amount.value = amountValue;
       amountWrap.appendChild(amountLabel);
       amountWrap.appendChild(amount);
 
@@ -163,8 +173,11 @@
           const description = descriptionNode ? String(descriptionNode.value || "").trim() : "";
           const quantity = quantityNode ? coerceLineItemNumber(quantityNode.value) : "";
           const amount = amountNode ? coerceLineItemNumber(amountNode.value) : "";
-          const unitPrice = coerceLineItemNumber(row.dataset.lineItemUnitPrice || "");
-          const total = amount === "" ? coerceLineItemNumber(row.dataset.lineItemTotal || "") : amount;
+          const unitPrice = amount === "" ? coerceLineItemNumber(row.dataset.lineItemUnitPrice || "") : amount;
+          const legacyTotal = coerceLineItemNumber(row.dataset.lineItemTotal || "");
+          const total = (unitPrice !== "" && quantity !== "")
+            ? Number(unitPrice) * Number(quantity)
+            : legacyTotal;
 
           if (description === "" && quantity === "" && total === "") {
             return null;
@@ -224,8 +237,8 @@
       return [{
         description,
         quantity: quantity === "" ? 0 : quantity,
-        unit_price: 0,
-        total: total === "" ? 0 : total,
+        unit_price: total === "" ? 0 : total,
+        total: (quantity === "" || total === "") ? 0 : Number(quantity) * Number(total),
       }];
     }
 

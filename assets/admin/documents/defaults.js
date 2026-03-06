@@ -36,7 +36,6 @@ const payloadDefaults = {
       client_email: "preview@example.com",
       client_address: "123 Preview Street, Demo City",
       cargo_type: "Paid Cargo",
-      amount_paid: 500,
       currency: "USD",
       line_items: [
         { description: "Paid Cargo", quantity: 1 },
@@ -139,7 +138,6 @@ const payloadDefaults = {
       { key: "client_email", label: "Client Email", type: "email", required: true },
       { key: "client_address", label: "Client Address", type: "textarea", required: false },
       { key: "line_items", label: "Commodities", type: "line_items", required: false },
-      { key: "amount_paid", label: "Amount Paid", type: "number", required: false },
       { key: "currency", label: "Currency", type: "text", required: false },
       { key: "payment_method", label: "Payment Method", type: "text", required: false },
       { key: "payment_reference", label: "Payment Reference", type: "text", required: false },

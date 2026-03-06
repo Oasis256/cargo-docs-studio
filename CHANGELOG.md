@@ -2,6 +2,14 @@
 
 All notable changes to CargoDocs Studio are documented here.
 
+## 0.1.9
+
+### Changed
+
+- Updated receipt commodity form behavior so the per-row `Amount` input is treated as a per-quantity value (line total = `qty * amount`).
+- Removed legacy `Amount Paid` from receipt form sections and default payload schema.
+- Kept compatibility by deriving `amount_paid` automatically from commodity totals during payload sync.
+
 ## 0.1.8
 
 ### Changed
