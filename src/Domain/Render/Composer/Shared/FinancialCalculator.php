@@ -75,7 +75,7 @@ class FinancialCalculator
         $taxAmount = isset($payload['tax_amount']) ? (float) $payload['tax_amount'] : ($declaredSubtotal * ($taxRate / 100));
         $insuranceAmount = isset($payload['insurance_amount']) ? (float) $payload['insurance_amount'] : ($declaredSubtotal * ($insuranceRate / 100));
         $smeltingTotal = $smeltingCost * $quantity;
-        $freightTotal = $freightCost;
+        $freightTotal = $freightCost * $quantity;
         $agentTotal = $agentFees;
 
         // Business rule: invoice grand total excludes declared taxable value itself.

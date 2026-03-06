@@ -35,11 +35,27 @@ class InvoiceRenderer
         $cargoType = sanitize_text_field((string) ($payload['cargo_type'] ?? 'Cargo'));
         $unit = strtoupper(sanitize_text_field((string) ($payload['unit'] ?? 'KGS')));
         $currency = strtoupper(sanitize_text_field((string) ($payload['currency'] ?? 'USD')));
+        $purity = sanitize_text_field((string) ($payload['purity'] ?? ''));
         $caratsEnabled = !empty($payload['carats_enabled']);
         $caratsPercent = isset($payload['carats_percent']) ? (float) $payload['carats_percent'] : 0.0;
-        $caratsPart = $caratsEnabled
-            ? (' (' . $this->formatter->formatSmart($quantity, 1) . ' + ' . $this->formatter->formatSmart($caratsPercent, 1) . '% carats)')
-            : '';
+        $purityDisplay = $purity;
+        if ($purityDisplay !== '' && !str_contains($purityDisplay, '%')) {
+            $purityDisplay .= '%';
+        }
+        $detailParts = [];
+        if ($purityDisplay !== '') {
+            $detailParts[] = $purityDisplay;
+        }
+        if ($purityDisplay !== '' && abs($caratsPercent) < 0.000001) {
+            $lastIdx = count($detailParts) - 1;
+            $detailParts[$lastIdx] .= ' Pure';
+        }
+        if ($caratsEnabled) {
+            if (abs($caratsPercent) >= 0.000001) {
+                $detailParts[] = $this->formatter->formatSmart($caratsPercent, 1) . '% carats';
+            }
+        }
+        $caratsPart = !empty($detailParts) ? (' (' . implode(' + ', $detailParts) . ')') : '';
         $paymentQrUri = $paymentBlock && !empty($paymentBlock['data_uri']) ? esc_url_raw((string) $paymentBlock['data_uri']) : '';
         $paymentAddress = sanitize_text_field((string) ($payload['payment_wallet_address'] ?? $payload['wallet_address'] ?? $payload['payment_address'] ?? ''));
         $paymentNetwork = sanitize_text_field((string) ($payload['payment_network'] ?? 'TRON (TRC20)'));
@@ -77,7 +93,7 @@ class InvoiceRenderer
         $taxAmount = $declaredSubtotal * ($taxRate / 100);
         $insuranceAmount = $declaredSubtotal * ($insuranceRate / 100);
         $smeltingTotal = $smeltingCost * $quantity;
-        $freightTotal = $freightCost;
+        $freightTotal = $freightCost * $quantity;
         $agentTotal = $agentFees;
         $totalAmount = $taxAmount + $insuranceAmount + $smeltingTotal + $certOrigin + $certOwnership + $exportPermit + $freightTotal + $agentTotal;
         if ($totalAmount <= 0) {
@@ -208,7 +224,7 @@ body{font-family:' . esc_attr($theme['font_family']) . ',Arial,sans-serif;margin
   <tr>
     <td>Freight charges</td>
     <td class="amount-column">' . $this->formatter->formatSmart($freightCost, 2) . '</td>
-    <td class="amount-column">-</td>
+    <td class="amount-column">' . number_format($quantity, 0) . ' ' . esc_html($unit) . '</td>
     <td class="amount-column">' . $this->formatter->formatSmart($freightTotal, 2) . '</td>
   </tr>
   <tr>

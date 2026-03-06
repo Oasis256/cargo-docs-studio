@@ -63,7 +63,7 @@ const skrFormSections = [
     {
       key: "client",
       title: "Client and Shipment",
-      fields: ["client_name", "client_email", "client_address", "destination", "cargo_type", "currency", "quantity", "unit", "carats_enabled", "carats_percent", "taxable_value"],
+      fields: ["client_name", "client_email", "client_address", "destination", "cargo_type", "currency", "quantity", "unit", "purity", "carats_enabled", "carats_percent", "taxable_value"],
     },
     {
       key: "payment",

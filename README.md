@@ -1,8 +1,6 @@
 # CargoDocs Studio
 
-Fresh plugin scaffold for architecture-first implementation of configurable Invoice/Receipt/SKR PDF generation with tracking QR and payment QR blocks.
-
-Current status: Phase 1 scaffold complete.
+CargoDocs Studio is a secure cargo document operations plugin for WordPress that delivers configurable Invoice, Receipt, and SKR PDF generation, template lifecycle governance, shipment tracking, and QR-enabled payment/tracking workflows.
 
 ## PDF engine toggle
 

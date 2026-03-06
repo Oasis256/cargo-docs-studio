@@ -2,6 +2,21 @@
 
 All notable changes to CargoDocs Studio are documented here.
 
+## 0.1.6
+
+### Changed
+
+- Expanded SKR form payload defaults and section mapping to include a dedicated `purity` field, so operators can capture purity percentage directly in form mode without custom JSON edits.
+- Improved invoice cargo detail rendering to compose purity/carat qualifiers consistently:
+- auto-appends `%` when purity is entered as a bare number,
+- appends `Pure` when purity exists and no carat percentage is provided,
+- includes carat percentage only when `carats_enabled` is active.
+- Updated invoice table presentation for freight rows to display quantity/unit context in the quantity column instead of a placeholder dash, improving invoice readability during reconciliation.
+
+### Fixed
+
+- Corrected freight charge math in invoice totals and shared financial calculations so freight is now computed per unit (`freight_cost * quantity`) rather than as a flat one-time value.
+
 ## 0.1.5
 
 ### Changed
