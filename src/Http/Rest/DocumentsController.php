@@ -154,6 +154,7 @@ class DocumentsController
         $cargoType = sanitize_text_field((string) ($payload['cargo_type'] ?? ''));
         $depositorName = sanitize_text_field((string) ($payload['depositor_name'] ?? ''));
         $contentDescription = sanitize_text_field((string) ($payload['content_description'] ?? ''));
+        $lineItems = is_array($payload['line_items'] ?? null) ? $payload['line_items'] : [];
         $validationErrors = [];
 
         if ($docTypeKey === 'skr') {
@@ -173,6 +174,18 @@ class DocumentsController
         } else {
             if ($clientName === '') {
                 $validationErrors[] = ['field' => 'client_name', 'message' => 'client_name is required.'];
+            }
+            if ($docTypeKey === 'receipt' && $cargoType === '' && !empty($lineItems)) {
+                foreach ($lineItems as $lineItem) {
+                    if (!is_array($lineItem)) {
+                        continue;
+                    }
+                    $lineItemLabel = sanitize_text_field((string) ($lineItem['description'] ?? $lineItem['cargo_type'] ?? $lineItem['name'] ?? ''));
+                    if ($lineItemLabel !== '') {
+                        $cargoType = $lineItemLabel;
+                        break;
+                    }
+                }
             }
             if ($cargoType === '') {
                 $validationErrors[] = ['field' => 'cargo_type', 'message' => 'cargo_type is required.'];

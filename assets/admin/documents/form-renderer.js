@@ -184,6 +184,9 @@
       if (k === "company_logo_url") {
         return { key: "company_logo_url", label: "Company Logo URL", type: "url", required: false };
       }
+      if (k === "line_items") {
+        return { key: "line_items", label: "Commodities", type: "line_items", required: false };
+      }
       return null;
     }
 
@@ -247,6 +250,9 @@
       const type = escapeHtmlAttr(f.type || "text");
       const label = escapeHtml(f.label || f.key);
 
+      if (f.key === "line_items") {
+        return `<div class="cds-skr-item cds-skr-item-wide"><label>${label}${req}</label><div class="cds-line-items-editor" data-line-items-root data-payload-key="${key}"><div class="cds-line-items-rows"></div><div class="cds-line-items-actions"><button type="button" class="button" data-line-items-add>Add Commodity</button></div></div></div>`;
+      }
       if (f.type === "checkbox") {
         return `<div class=\"cds-skr-item cds-skr-item-wide\"><label class=\"cds-form-checkbox\"><input id=\"cds-form-${key}\" type=\"checkbox\" data-payload-key=\"${key}\" data-payload-type=\"checkbox\" /> ${label}${req}</label></div>`;
       }

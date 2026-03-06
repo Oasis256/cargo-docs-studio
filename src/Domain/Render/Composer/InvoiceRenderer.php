@@ -36,8 +36,7 @@ class InvoiceRenderer
         $unit = strtoupper(sanitize_text_field((string) ($payload['unit'] ?? 'KGS')));
         $currency = strtoupper(sanitize_text_field((string) ($payload['currency'] ?? 'USD')));
         $purity = sanitize_text_field((string) ($payload['purity'] ?? ''));
-        $caratsEnabled = !empty($payload['carats_enabled']);
-        $caratsPercent = isset($payload['carats_percent']) ? (float) $payload['carats_percent'] : 0.0;
+        $caratsRaw = sanitize_text_field((string) ($payload['carats'] ?? $payload['carats_percent'] ?? ''));
         $purityDisplay = $purity;
         if ($purityDisplay !== '' && !str_contains($purityDisplay, '%')) {
             $purityDisplay .= '%';
@@ -46,14 +45,14 @@ class InvoiceRenderer
         if ($purityDisplay !== '') {
             $detailParts[] = $purityDisplay;
         }
-        if ($purityDisplay !== '' && abs($caratsPercent) < 0.000001) {
+        if ($purityDisplay !== '' && $caratsRaw === '') {
             $lastIdx = count($detailParts) - 1;
             $detailParts[$lastIdx] .= ' Pure';
         }
-        if ($caratsEnabled) {
-            if (abs($caratsPercent) >= 0.000001) {
-                $detailParts[] = $this->formatter->formatSmart($caratsPercent, 1) . '% carats';
-            }
+        if ($caratsRaw !== '') {
+            $detailParts[] = is_numeric($caratsRaw)
+                ? $this->formatter->formatSmart((float) $caratsRaw, 2) . ' carats'
+                : $caratsRaw;
         }
         $caratsPart = !empty($detailParts) ? (' (' . implode(' + ', $detailParts) . ')') : '';
         $paymentQrUri = $paymentBlock && !empty($paymentBlock['data_uri']) ? esc_url_raw((string) $paymentBlock['data_uri']) : '';
@@ -129,7 +128,7 @@ body{font-family:' . esc_attr($theme['font_family']) . ',Arial,sans-serif;margin
 .amount-column{text-align:right;}
 .total-row{background:#F4A460 !important;color:#fff;font-weight:700;font-size:12pt;}
 .total-row td{padding:12px 10px;}
-.total-words-row td{padding:8px 10px;font-size:10pt;text-align:left;color:#fff;}
+.total-words-row td{padding:8px 10px;font-size:10pt;text-align:right;color:#fff;}
 .network-section{font-size:9pt;color:#666;text-align:center;}
 .mono{font-family:monospace;font-size:9pt;word-break:break-all;}
 .bank-qr-table{width:100%;border-collapse:collapse;margin-top:10px;}

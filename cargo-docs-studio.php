@@ -3,7 +3,7 @@
  * Plugin Name: CargoDocs Studio
  * Plugin URI: https://github.com/Oasis256/cargo-docs-studio
  * Description: Secure cargo document operations suite for invoice, receipt, and SKR generation with template governance, tracking workflows, and QR-enabled outputs.
- * Version: 0.1.7
+ * Version: 0.1.8
  * Author: Oasis Innocent
  * License: GPLv2 or later
  * Update URI: https://github.com/Oasis256/cargo-docs-studio
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('CDS_VERSION', '0.1.7');
+define('CDS_VERSION', '0.1.8');
 define('CDS_PLUGIN_FILE', __FILE__);
 define('CDS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CDS_PLUGIN_URL', plugin_dir_url(__FILE__));

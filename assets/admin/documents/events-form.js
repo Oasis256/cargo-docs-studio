@@ -66,6 +66,22 @@
           renderPayloadHints: validation.renderPayloadHints,
           setGenerateButtonState: validation.setGenerateButtonState,
         });
+      els.formBuilder.addEventListener("click", (event) => {
+        const addBtn = event.target.closest("[data-line-items-add]");
+        if (addBtn) {
+          event.preventDefault();
+          payloadSync.addLineItemRow(addBtn);
+          syncFromForm();
+          return;
+        }
+
+        const removeBtn = event.target.closest("[data-line-items-remove]");
+        if (removeBtn) {
+          event.preventDefault();
+          payloadSync.removeLineItemRow(removeBtn);
+          syncFromForm();
+        }
+      });
       els.formBuilder.addEventListener("input", syncFromForm);
       els.formBuilder.addEventListener("change", syncFromForm);
     }

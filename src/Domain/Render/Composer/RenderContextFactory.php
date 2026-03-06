@@ -72,7 +72,7 @@ class RenderContextFactory
     public function defaultSectionsForDocType(string $docTypeKey): array
     {
         return match ($docTypeKey) {
-            'receipt' => ['header', 'summary', 'line_items', 'payment_qr', 'footer'],
+            'receipt' => ['header', 'summary', 'line_items', 'footer'],
             'skr' => ['header', 'summary', 'tracking_qr', 'footer'],
             default => ['header', 'summary', 'line_items', 'tracking_qr', 'payment_qr', 'footer'],
         };

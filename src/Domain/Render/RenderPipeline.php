@@ -76,7 +76,7 @@ class RenderPipeline
         }
 
         $paymentBlock = null;
-        if ($btcEnabled && !empty($btcAddress)) {
+        if ($docTypeKey !== 'receipt' && $btcEnabled && !empty($btcAddress)) {
             $paymentBlock = $this->paymentQr->buildBitcoin($btcAddress, $btcAmount, $btcLabel);
         }
 
@@ -120,6 +120,10 @@ class RenderPipeline
         ]);
 
         $trackingUrl = home_url('/cargo-track/' . rawurlencode((string) $payload['tracking_code']) . '?t=preview');
+        $docTypeKey = sanitize_key((string) ($templateConfig['doc_type_key'] ?? ($payload['doc_type_key'] ?? 'invoice')));
+        if ($docTypeKey === '') {
+            $docTypeKey = 'invoice';
+        }
 
         $btcSettings = $this->settings->get('bitcoin_payment', [
             'enabled' => true,
@@ -134,7 +138,7 @@ class RenderPipeline
 
         $paymentBlock = null;
         $btcAddress = sanitize_text_field((string) ($payload['bitcoin_wallet_address'] ?? ($btcSettings['address'] ?? '')));
-        if ($btcEnabled && $btcAddress !== '') {
+        if ($docTypeKey !== 'receipt' && $btcEnabled && $btcAddress !== '') {
             $btcLabel = sanitize_text_field((string) ($payload['bitcoin_label'] ?? ($btcSettings['label'] ?? 'Cargo Payment')));
             $amountMode = (string) ($payload['bitcoin_amount_mode'] ?? ($btcSettings['amount_mode'] ?? 'none'));
             $btcAmount = null;
@@ -144,10 +148,6 @@ class RenderPipeline
             $paymentBlock = $this->paymentQr->buildBitcoin($btcAddress, $btcAmount, $btcLabel);
         }
 
-        $docTypeKey = sanitize_key((string) ($templateConfig['doc_type_key'] ?? ($payload['doc_type_key'] ?? 'invoice')));
-        if ($docTypeKey === '') {
-            $docTypeKey = 'invoice';
-        }
         $trackingBlock = [
             'url' => $trackingUrl,
             'data_uri' => '',
@@ -194,6 +194,10 @@ class RenderPipeline
         ]);
 
         $trackingUrl = home_url('/cargo-track/' . rawurlencode((string) $payload['tracking_code']) . '?t=preview');
+        $docTypeKey = sanitize_key((string) ($templateConfig['doc_type_key'] ?? ($payload['doc_type_key'] ?? 'invoice')));
+        if ($docTypeKey === '') {
+            $docTypeKey = 'invoice';
+        }
 
         $btcSettings = $this->settings->get('bitcoin_payment', [
             'enabled' => true,
@@ -208,7 +212,7 @@ class RenderPipeline
 
         $paymentBlock = null;
         $btcAddress = sanitize_text_field((string) ($payload['bitcoin_wallet_address'] ?? ($btcSettings['address'] ?? '')));
-        if ($btcEnabled && $btcAddress !== '') {
+        if ($docTypeKey !== 'receipt' && $btcEnabled && $btcAddress !== '') {
             $btcLabel = sanitize_text_field((string) ($payload['bitcoin_label'] ?? ($btcSettings['label'] ?? 'Cargo Payment')));
             $amountMode = (string) ($payload['bitcoin_amount_mode'] ?? ($btcSettings['amount_mode'] ?? 'none'));
             $btcAmount = null;
@@ -218,10 +222,6 @@ class RenderPipeline
             $paymentBlock = $this->paymentQr->buildBitcoin($btcAddress, $btcAmount, $btcLabel);
         }
 
-        $docTypeKey = sanitize_key((string) ($templateConfig['doc_type_key'] ?? ($payload['doc_type_key'] ?? 'invoice')));
-        if ($docTypeKey === '') {
-            $docTypeKey = 'invoice';
-        }
         $trackingBlock = [
             'url' => $trackingUrl,
             'data_uri' => '',

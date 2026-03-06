@@ -2,6 +2,17 @@
 
 All notable changes to CargoDocs Studio are documented here.
 
+## 0.1.8
+
+### Changed
+
+- Refined receipt commodity editing UX by restructuring the repeater form layout and aligning fields with the standardized admin form aesthetics.
+- Added explicit per-commodity `Amount` capture in receipt form mode and improved payload sync behavior between form and JSON representations.
+- Updated receipt rendering to alternate commodity row backgrounds for clearer visual separation.
+- Right-aligned totals-in-words rows in both invoice and receipt outputs for consistent monetary presentation.
+- Improved receipt total computation precedence so generated line-item totals are authoritative when `line_items` are provided, avoiding legacy `amount_paid` override mismatches.
+- Updated invoice purity/carat presentation logic and related rendering pathways for improved output consistency.
+
 ## 0.1.7
 
 ### Changed

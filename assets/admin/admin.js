@@ -176,7 +176,7 @@
       return {
         page: "A4",
         title: "Payment Receipt",
-        sections: ["header", "summary", "line_items", "payment_qr", "footer"],
+        sections: ["header", "summary", "line_items", "footer"],
         qr: { tracking_position: "right", payment_position: "right", size: 96 },
       };
     }
@@ -203,15 +203,15 @@
         client_name: "Preview Client",
         client_email: "preview@example.com",
         client_address: "Plot 429 Sseguku, Kampala",
-        cargo_type: "Gold Bars",
-        quantity: 2,
-        taxable_value: 500,
         payment_method: "Bank Transfer",
         payment_reference: "TRX-REF-001",
         receipt_number: "RCP-20260205-38C659",
         notes: "Payment confirmed. Cargo processing continues.",
         currency: "USD",
-        bitcoin_enabled: true,
+        line_items: [
+          { description: "Gold Bars", quantity: 2, unit_price: 250, total: 500 },
+          { description: "Export Handling", quantity: 1, unit_price: 75, total: 75 },
+        ],
       };
     }
     if (key === "skr") {

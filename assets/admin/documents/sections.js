@@ -63,7 +63,7 @@ const skrFormSections = [
     {
       key: "client",
       title: "Client and Shipment",
-      fields: ["client_name", "client_email", "client_address", "destination", "cargo_type", "currency", "quantity", "unit", "purity", "carats_enabled", "carats_percent", "taxable_value"],
+      fields: ["client_name", "client_email", "client_address", "destination", "cargo_type", "currency", "quantity", "unit", "purity", "carats", "taxable_value"],
     },
     {
       key: "payment",
@@ -90,11 +90,11 @@ const skrFormSections = [
     {
       key: "commodity",
       title: "Commodity",
-      fields: ["cargo_type", "quantity", "taxable_value", "amount_paid", "currency"],
+      fields: ["line_items", "amount_paid", "currency"],
     },
     {
       key: "payment",
-      title: "Payment and Wallet QR",
+      title: "Payment Details",
       fields: ["payment_method", "payment_reference", "payment_wallet_address", "payment_network", "bitcoin_enabled"],
     },
     {

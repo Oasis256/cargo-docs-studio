@@ -51,7 +51,6 @@ class ReceiptRenderer
         $receiptTitle = sanitize_text_field((string) ($payload['receipt_title'] ?? 'PAYMENT RECEIPT'));
         $wetStampNote = sanitize_text_field((string) ($payload['wet_stamp_note'] ?? 'Valid Only If Wet Stamped.'));
 
-        $paymentQrUri = $paymentBlock && !empty($paymentBlock['data_uri']) ? esc_url_raw((string) $paymentBlock['data_uri']) : '';
         $paymentAddress = sanitize_text_field((string) ($payload['payment_wallet_address'] ?? $payload['bitcoin_wallet_address'] ?? $payload['wallet_address'] ?? $payload['payment_address'] ?? ''));
         $paymentUri = (string) ($paymentBlock['uri'] ?? '');
         if ($paymentUri === '' && $paymentAddress !== '') {
@@ -63,20 +62,27 @@ class ReceiptRenderer
         if ($paymentUri === '') {
             $paymentUri = 'receipt:' . $receiptNumber;
         }
-        $paymentQrImage = sanitize_text_field((string) ($payload['payment_qr_url'] ?? $payload['wallet_qr_url'] ?? ''));
-        if ($paymentQrUri === '' && $paymentQrImage !== '' && preg_match('#^https?://#i', $paymentQrImage)) {
-            $paymentQrUri = esc_url_raw($paymentQrImage);
-        }
-        $paymentQrSource = $this->images->resolveQrImageSource($paymentQrUri, $paymentUri, 240);
         $lineAmount = $unitCost * $quantity;
 
         $items = [];
+        $hasLineItemsPayload = !empty($payload['line_items']) && is_array($payload['line_items']);
+        $rawItemSets = [];
+        if (!empty($payload['line_items']) && is_array($payload['line_items'])) {
+            $rawItemSets[] = $payload['line_items'];
+        }
         if (!empty($payload['items']) && is_array($payload['items'])) {
-            foreach ($payload['items'] as $item) {
+            $rawItemSets[] = $payload['items'];
+        }
+        if (!empty($payload['commodities']) && is_array($payload['commodities'])) {
+            $rawItemSets[] = $payload['commodities'];
+        }
+
+        foreach ($rawItemSets as $rawItems) {
+            foreach ($rawItems as $item) {
                 if (!is_array($item)) {
                     continue;
                 }
-                $desc = sanitize_text_field((string) ($item['description'] ?? ''));
+                $desc = sanitize_text_field((string) ($item['description'] ?? $item['cargo_type'] ?? $item['name'] ?? ''));
                 $itemUnit = (float) ($item['unit_cost'] ?? $item['unit_price'] ?? 0);
                 $itemQty = (float) ($item['quantity'] ?? 0);
                 $itemAmount = isset($item['amount']) ? (float) $item['amount'] : (isset($item['total']) ? (float) $item['total'] : ($itemUnit * $itemQty));
@@ -90,6 +96,9 @@ class ReceiptRenderer
                     'amount' => $itemAmount,
                 ];
             }
+            if (!empty($items)) {
+                break;
+            }
         }
         if (empty($items)) {
             $items[] = [
@@ -99,23 +108,32 @@ class ReceiptRenderer
                 'amount' => $lineAmount,
             ];
         }
+        if (count($items) === 1 && $amount > 0 && !$hasLineItemsPayload) {
+            if ((float) $items[0]['amount'] <= 0) {
+                $items[0]['amount'] = $amount;
+            }
+            if ((float) $items[0]['unit'] <= 0 && (float) $items[0]['qty'] > 0) {
+                $items[0]['unit'] = $amount / (float) $items[0]['qty'];
+            }
+        }
 
         $rowsHtml = '';
         $itemsTotal = 0.0;
-        foreach ($items as $item) {
+        foreach ($items as $index => $item) {
             $itemsTotal += (float) $item['amount'];
             $qtyLabel = rtrim(rtrim(number_format((float) $item['qty'], 3, '.', ''), '0'), '.');
             if ($qtyLabel === '') {
                 $qtyLabel = '0';
             }
-            $rowsHtml .= '<tr>
+            $rowClass = ($index % 2 === 0) ? 'commodity-row-odd' : 'commodity-row-even';
+            $rowsHtml .= '<tr class="' . esc_attr($rowClass) . '">
       <td>' . esc_html($item['description']) . '</td>
       <td class="amount-right">$' . $this->formatter->formatSmart((float) $item['unit'], 2) . '</td>
       <td class="center">' . esc_html($qtyLabel) . '</td>
       <td class="amount-right">$' . $this->formatter->formatSmart((float) $item['amount'], 2) . '</td>
     </tr>';
         }
-        $displayTotal = $amount > 0 ? $amount : $itemsTotal;
+        $displayTotal = $hasLineItemsPayload ? $itemsTotal : ($amount > 0 ? $amount : $itemsTotal);
         $displayTotalWords = $this->formatter->moneyToWords($displayTotal, $currency);
 
         return '
@@ -146,9 +164,11 @@ body{font-family:' . esc_attr($theme['font_family']) . ',Arial,sans-serif;margin
 .commodity-table{margin:12px 0;}
 .commodity-table th{background:#d2a272;color:#1f3550;font-weight:700;padding:8px 10px;border:1px solid #bbb;text-align:center;}
 .commodity-table td{padding:7px 10px;border:1px solid #ddd;}
+.commodity-table .commodity-row-odd td{background:#f8f8f8;}
+.commodity-table .commodity-row-even td{background:#ffffff;}
 .receipt-total-row td{background:#d2a272;color:#fff;font-weight:700;}
 .receipt-total-row .amount-right{font-size:14pt;}
-.receipt-total-words-row td{background:#d2a272;color:#fff;font-weight:700;text-align:left;}
+.receipt-total-words-row td{background:#d2a272;color:#fff;font-weight:700;text-align:right;}
 .amount-right{text-align:right;}
 .center{text-align:center;}
 .total-line{margin-top:8px;text-align:right;font-size:21pt;font-weight:700;color:#111;}
@@ -217,7 +237,7 @@ body{font-family:' . esc_attr($theme['font_family']) . ',Arial,sans-serif;margin
     <div class="payment-body">
       <table class="payment-grid">
         <tr>
-          <td style="width:60%;">
+          <td style="width:100%;">
             <strong>Payment Method:</strong> ' . esc_html($paymentMethod) . '<br>
             ' . ($paymentReference !== '' ? '<strong>Reference:</strong> ' . esc_html($paymentReference) . '<br>' : '') . '
             ' . ($paymentAddress !== '' ? '<strong>Wallet:</strong> ' . esc_html($paymentAddress) . '<br>' : '') . '
@@ -226,9 +246,6 @@ body{font-family:' . esc_attr($theme['font_family']) . ',Arial,sans-serif;margin
             <strong>For and on behalf of</strong><br><br>
             ......................................<br>
             ' . esc_html($companyName) . '
-          </td>
-          <td style="width:40%;text-align:right;">
-            ' . ($paymentQrSource !== '' ? '<img src="' . esc_attr($paymentQrSource) . '" class="wallet-qr" alt="Wallet QR Code" />' : '') . '
           </td>
         </tr>
       </table>
