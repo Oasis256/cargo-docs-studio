@@ -8,7 +8,7 @@ use CargoDocsStudio\Domain\Render\RenderPipeline;
 
 class TemplatesController
 {
-    private const ALLOWED_DOC_TYPES = ['invoice', 'receipt', 'skr'];
+    private const ALLOWED_DOC_TYPES = ['invoice', 'receipt', 'skr', 'spa'];
     private const MAX_JSON_BYTES = 250000;
     private const MAX_JSON_DEPTH = 12;
     private const MAX_JSON_NODES = 3000;
@@ -134,7 +134,7 @@ class TemplatesController
                 400,
                 'validation_error',
                 'Invalid doc_type value',
-                [['field' => 'doc_type', 'message' => 'doc_type must be one of: invoice, receipt, skr.']]
+                [['field' => 'doc_type', 'message' => 'doc_type must be one of: invoice, receipt, skr, spa.']]
             );
         }
 
@@ -164,7 +164,7 @@ class TemplatesController
         if ($docTypeKey === '') {
             $validationErrors[] = ['field' => 'doc_type_key', 'message' => 'doc_type_key is required.'];
         } elseif (!in_array($docTypeKey, self::ALLOWED_DOC_TYPES, true)) {
-            $validationErrors[] = ['field' => 'doc_type_key', 'message' => 'doc_type_key must be one of: invoice, receipt, skr.'];
+            $validationErrors[] = ['field' => 'doc_type_key', 'message' => 'doc_type_key must be one of: invoice, receipt, skr, spa.'];
         }
         if ($name === '') {
             $validationErrors[] = ['field' => 'name', 'message' => 'name is required.'];

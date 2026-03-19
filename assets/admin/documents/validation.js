@@ -43,6 +43,11 @@
             .filter(Boolean)
         );
         required = required.filter((f) => visible.has(String((f && f.key) || "").trim()));
+      } else if (docType === "spa") {
+        required = required.filter((f) => {
+          const key = String((f && f.key) || "").trim();
+          return key !== "client_name" && key !== "client_email" && key !== "cargo_type";
+        });
       }
       return required;
     }

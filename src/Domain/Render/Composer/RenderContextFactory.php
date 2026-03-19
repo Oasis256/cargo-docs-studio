@@ -74,6 +74,7 @@ class RenderContextFactory
         return match ($docTypeKey) {
             'receipt' => ['header', 'summary', 'line_items', 'footer'],
             'skr' => ['header', 'summary', 'tracking_qr', 'footer'],
+            'spa' => ['header', 'summary', 'footer'],
             default => ['header', 'summary', 'line_items', 'tracking_qr', 'payment_qr', 'footer'],
         };
     }
@@ -83,6 +84,7 @@ class RenderContextFactory
         return match ($docTypeKey) {
             'receipt' => 'Payment Receipt',
             'skr' => 'Safe Keeping Receipt',
+            'spa' => 'Sale and Purchase Agreement',
             default => 'Cargo Invoice',
         };
     }

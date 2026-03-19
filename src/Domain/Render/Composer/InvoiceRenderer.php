@@ -41,20 +41,22 @@ class InvoiceRenderer
         if ($purityDisplay !== '' && !str_contains($purityDisplay, '%')) {
             $purityDisplay .= '%';
         }
-        $detailParts = [];
-        if ($purityDisplay !== '') {
-            $detailParts[] = $purityDisplay;
-        }
-        if ($purityDisplay !== '' && $caratsRaw === '') {
-            $lastIdx = count($detailParts) - 1;
-            $detailParts[$lastIdx] .= ' Pure';
-        }
+        $caratsDisplay = '';
         if ($caratsRaw !== '') {
-            $detailParts[] = is_numeric($caratsRaw)
-                ? $this->formatter->formatSmart((float) $caratsRaw, 2) . ' carats'
+            $caratsValue = is_numeric($caratsRaw)
+                ? $this->formatter->formatSmart((float) $caratsRaw, 2)
                 : $caratsRaw;
+            $caratsDisplay = trim($caratsValue) . ' Carats';
         }
-        $caratsPart = !empty($detailParts) ? (' (' . implode(' + ', $detailParts) . ')') : '';
+
+        $caratsPart = '';
+        if ($purityDisplay !== '' && $caratsDisplay !== '') {
+            $caratsPart = ' ( ' . $purityDisplay . ' + / ' . $caratsDisplay . ' )';
+        } elseif ($purityDisplay !== '') {
+            $caratsPart = ' ( ' . $purityDisplay . ' Pure )';
+        } elseif ($caratsDisplay !== '') {
+            $caratsPart = ' ( ' . $caratsDisplay . ' )';
+        }
         $paymentQrUri = $paymentBlock && !empty($paymentBlock['data_uri']) ? esc_url_raw((string) $paymentBlock['data_uri']) : '';
         $paymentAddress = sanitize_text_field((string) ($payload['payment_wallet_address'] ?? $payload['wallet_address'] ?? $payload['payment_address'] ?? ''));
         $paymentNetwork = sanitize_text_field((string) ($payload['payment_network'] ?? 'TRON (TRC20)'));

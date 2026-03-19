@@ -33,7 +33,21 @@ class ImageResolver
                 }
             }
 
-            // Avoid broken-image placeholders in PDF when remote URL is not resolvable by engine.
+            // Try to inline remote images to avoid broken placeholders in PDF engines.
+            $response = wp_safe_remote_get($source, [
+                'timeout' => 8,
+                'redirection' => 3,
+            ]);
+            if (!is_wp_error($response)) {
+                $status = (int) wp_remote_retrieve_response_code($response);
+                $body = (string) wp_remote_retrieve_body($response);
+                $contentType = (string) wp_remote_retrieve_header($response, 'content-type');
+                if ($status >= 200 && $status < 300 && $body !== '' && str_starts_with(strtolower($contentType), 'image/')) {
+                    return 'data:' . $contentType . ';base64,' . base64_encode($body);
+                }
+            }
+
+            // Avoid broken-image placeholders in PDF when URL is not image-resolvable.
             return '';
         }
 

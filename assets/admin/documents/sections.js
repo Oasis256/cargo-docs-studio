@@ -108,6 +108,23 @@ const skrFormSections = [
       fields: ["notes", "company_phone", "company_email", "company_website", "company_address", "wet_stamp_note"],
     },
   ];
+  const spaFormSections = [
+    {
+      key: "tables",
+      title: "Table",
+      fields: ["spa_tables"],
+    },
+    {
+      key: "text_walls",
+      title: "Text Wall",
+      fields: ["spa_text_walls"],
+    },
+    {
+      key: "images",
+      title: "Images",
+      fields: ["company_logo_url", "watermark_enabled", "watermark_url", "spa_images", "seller_initials", "buyer_initials"],
+    },
+  ];
   const invoiceFieldUi = {
     currency: { control: "select", options: ["USD", "EUR", "GBP", "UGX"] },
     unit: { control: "select", options: ["KGS", "KG", "GRAMS", "TONNES"] },
@@ -130,6 +147,7 @@ const skrFormSections = [
     skrFormSections: skrFormSections,
     invoiceFormSections: invoiceFormSections,
     receiptFormSections: receiptFormSections,
+    spaFormSections: spaFormSections,
     invoiceFieldUi: invoiceFieldUi,
     receiptFieldUi: receiptFieldUi,
     skrFieldUi: skrFieldUi,

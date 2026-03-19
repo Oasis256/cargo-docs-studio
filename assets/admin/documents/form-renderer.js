@@ -11,6 +11,7 @@
       skrFormSections,
       invoiceFormSections,
       receiptFormSections,
+      spaFormSections,
       skrFieldUi,
       invoiceFieldUi,
       receiptFieldUi,
@@ -84,6 +85,11 @@
       if (getDocType() === "skr") {
         els.formBuilder.classList.add("cds-doc-form-builder-skr");
         renderSkrFormBuilder(fields);
+        return;
+      }
+      if (getDocType() === "spa") {
+        els.formBuilder.classList.add("cds-doc-form-builder-skr");
+        renderSpaFormBuilder(fields);
         return;
       }
       els.formBuilder.classList.remove("cds-doc-form-builder-skr");
@@ -161,6 +167,26 @@
         .join("");
 
       els.formBuilder.innerHTML = `<div class=\"cds-skr-form\"><h3 class=\"cds-skr-title\">Receipt Generator</h3>${sectionHtml}</div>`;
+    }
+
+    function renderSpaFormBuilder(fields) {
+      els.formBuilder.classList.add("cds-doc-form-builder-skr");
+      const byKey = new Map((fields || []).map((f) => [f.key, f]));
+      const sectionHtml = spaFormSections
+        .map((section) => {
+          const items = section.fields
+            .map((key) => byKey.get(key))
+            .filter(Boolean)
+            .map((f) => renderSpaField(f))
+            .join("");
+          if (!items) {
+            return "";
+          }
+          return `<section class=\"cds-skr-section\"><h4>${escapeHtml(section.title)}</h4><div class=\"cds-skr-grid\">${items}</div></section>`;
+        })
+        .join("");
+
+      els.formBuilder.innerHTML = `<div class=\"cds-skr-form\"><h3 class=\"cds-skr-title\">SPA Generator</h3>${sectionHtml}</div>`;
     }
 
     function getForcedSkrField(key) {
@@ -262,6 +288,23 @@
       }
       if (f.type === "textarea") {
         return `<div class=\"cds-skr-item cds-skr-item-wide\"><label for=\"cds-form-${key}\">${label}${req}</label><textarea id=\"cds-form-${key}\" data-payload-key=\"${key}\" data-payload-type=\"${type}\" ${requiredAttr}></textarea></div>`;
+      }
+      return `<div class=\"cds-skr-item\"><label for=\"cds-form-${key}\">${label}${req}</label><input id=\"cds-form-${key}\" type=\"${escapeHtmlAttr(f.type || "text")}\" data-payload-key=\"${key}\" data-payload-type=\"${type}\" ${requiredAttr} /></div>`;
+    }
+
+    function renderSpaField(f) {
+      const req = f.required ? " <span class=\"required\">*</span>" : "";
+      const requiredAttr = f.required ? "required" : "";
+      const key = escapeHtmlAttr(f.key);
+      const type = escapeHtmlAttr(f.type || "text");
+      const label = escapeHtml(f.label || f.key);
+      const isJsonBlock = f.key === "spa_tables" || f.key === "spa_text_walls" || f.key === "spa_images";
+
+      if (f.type === "checkbox") {
+        return `<div class=\"cds-skr-item cds-skr-item-wide\"><label class=\"cds-form-checkbox\"><input id=\"cds-form-${key}\" type=\"checkbox\" data-payload-key=\"${key}\" data-payload-type=\"checkbox\" /> ${label}${req}</label></div>`;
+      }
+      if (f.type === "textarea") {
+        return `<div class=\"cds-skr-item cds-skr-item-wide\"><label for=\"cds-form-${key}\">${label}${req}</label><textarea id=\"cds-form-${key}\" data-payload-key=\"${key}\" data-payload-type=\"${type}\" ${requiredAttr} ${isJsonBlock ? 'data-json-block="1"' : ""}></textarea></div>`;
       }
       return `<div class=\"cds-skr-item\"><label for=\"cds-form-${key}\">${label}${req}</label><input id=\"cds-form-${key}\" type=\"${escapeHtmlAttr(f.type || "text")}\" data-payload-key=\"${key}\" data-payload-type=\"${type}\" ${requiredAttr} /></div>`;
     }

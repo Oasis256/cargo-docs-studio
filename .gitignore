@@ -8,5 +8,5 @@ Thumbs.db
 dist/
 *.zip
 wp-cli.phar
-
+wp-content/plugins/
 SAAS*

@@ -15,6 +15,7 @@ class HtmlComposerFacade
     private InvoiceRenderer $invoiceRenderer;
     private ReceiptRenderer $receiptRenderer;
     private SkrRenderer $skrRenderer;
+    private SpaRenderer $spaRenderer;
 
     public function __construct(
         ?RenderContextFactory $contextFactory = null,
@@ -23,7 +24,8 @@ class HtmlComposerFacade
         ?ImageResolver $images = null,
         ?InvoiceRenderer $invoiceRenderer = null,
         ?ReceiptRenderer $receiptRenderer = null,
-        ?SkrRenderer $skrRenderer = null
+        ?SkrRenderer $skrRenderer = null,
+        ?SpaRenderer $spaRenderer = null
     ) {
         $this->formatter = $formatter ?: new NumberFormatter();
         $this->calculator = $calculator ?: new FinancialCalculator();
@@ -32,6 +34,7 @@ class HtmlComposerFacade
         $this->invoiceRenderer = $invoiceRenderer ?: new InvoiceRenderer($this->formatter, $this->images, $this->calculator);
         $this->receiptRenderer = $receiptRenderer ?: new ReceiptRenderer($this->formatter, $this->images);
         $this->skrRenderer = $skrRenderer ?: new SkrRenderer($this->formatter, $this->images);
+        $this->spaRenderer = $spaRenderer ?: new SpaRenderer($this->images);
     }
 
     public function composeInvoice(array $payload, array $trackingBlock, ?array $paymentBlock = null, array $templateConfig = []): string
@@ -51,6 +54,9 @@ class HtmlComposerFacade
         }
         if ($docTypeKey === 'skr') {
             return $this->skrRenderer->renderStable($payload, $trackingBlock, $theme);
+        }
+        if ($docTypeKey === 'spa') {
+            return $this->spaRenderer->render($payload);
         }
 
         $watermarkUrl = $this->images->resolveImageSource((string) ($payload['watermark_url'] ?? ($payload['skr_watermark_url'] ?? '')));

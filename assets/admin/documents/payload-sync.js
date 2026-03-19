@@ -256,6 +256,19 @@
       return String(raw == null ? "" : raw);
     }
 
+    function parseJsonBlock(raw) {
+      const text = String(raw == null ? "" : raw).trim();
+      if (text === "") {
+        return [];
+      }
+      try {
+        const parsed = JSON.parse(text);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (err) {
+        return [];
+      }
+    }
+
     function tryParsePayload() {
       try {
         return JSON.parse((els.payload && els.payload.value) || "{}");
@@ -287,6 +300,10 @@
 
         if (type === "checkbox") {
           payload[key] = !!node.checked;
+          return;
+        }
+        if (node.hasAttribute("data-json-block")) {
+          payload[key] = parseJsonBlock(node.value);
           return;
         }
         payload[key] = coerceValueByType(node.value, type);
@@ -345,6 +362,14 @@
         const value = Object.prototype.hasOwnProperty.call(payload, key) ? payload[key] : "";
         if (type === "checkbox") {
           node.checked = !!value;
+        } else if (node.hasAttribute("data-json-block")) {
+          if (Array.isArray(value)) {
+            node.value = JSON.stringify(value, null, 2);
+          } else if (typeof value === "string") {
+            node.value = value;
+          } else {
+            node.value = "[]";
+          }
         } else {
           node.value = value == null ? "" : String(value);
         }

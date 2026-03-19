@@ -12,7 +12,7 @@ class DocumentsPage
 
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__('Documents', 'cargo-docs-studio') . '</h1>';
-        echo '<p>' . esc_html__('Generate invoice, receipt, or SKR documents from selected templates.', 'cargo-docs-studio') . '</p>';
+        echo '<p>' . esc_html__('Generate invoice, receipt, SKR, or SPA documents from selected templates.', 'cargo-docs-studio') . '</p>';
 
         echo '<div id="cds-documents-page" class="cds-grid">';
         if (current_user_can('cds_generate_documents') || current_user_can('manage_options')) {
@@ -24,6 +24,7 @@ class DocumentsPage
             echo '<option value="invoice">Invoice</option>';
             echo '<option value="receipt">Receipt</option>';
             echo '<option value="skr">SKR</option>';
+            echo '<option value="spa">SPA</option>';
             echo '</select>';
 
             echo '<label for="cds-doc-template-revision">' . esc_html__('Template Revision', 'cargo-docs-studio') . '</label>';
@@ -63,6 +64,7 @@ class DocumentsPage
         echo '<option value="invoice">Invoice</option>';
         echo '<option value="receipt">Receipt</option>';
         echo '<option value="skr">SKR</option>';
+        echo '<option value="spa">SPA</option>';
         echo '</select>';
         echo '</div>';
         echo '<div>';

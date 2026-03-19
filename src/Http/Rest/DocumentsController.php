@@ -10,7 +10,7 @@ use CargoDocsStudio\Domain\Tracking\ShipmentService;
 
 class DocumentsController
 {
-    private const ALLOWED_DOC_TYPES = ['invoice', 'receipt', 'skr'];
+    private const ALLOWED_DOC_TYPES = ['invoice', 'receipt', 'skr', 'spa'];
     private const MAX_PAYLOAD_BYTES = 200000;
     private const MAX_PAYLOAD_DEPTH = 10;
     private const MAX_PAYLOAD_NODES = 2000;
@@ -44,6 +44,12 @@ class DocumentsController
         register_rest_route('cds/v1', '/documents/skr/generate', [
             'methods' => 'POST',
             'callback' => [$this, 'generateSkr'],
+            'permission_callback' => [$this, 'canGenerateDocuments'],
+        ]);
+
+        register_rest_route('cds/v1', '/documents/spa/generate', [
+            'methods' => 'POST',
+            'callback' => [$this, 'generateSpa'],
             'permission_callback' => [$this, 'canGenerateDocuments'],
         ]);
     }
@@ -97,6 +103,11 @@ class DocumentsController
     public function generateSkr(\WP_REST_Request $request): \WP_REST_Response
     {
         return $this->generateByType($request, 'skr');
+    }
+
+    public function generateSpa(\WP_REST_Request $request): \WP_REST_Response
+    {
+        return $this->generateByType($request, 'spa');
     }
 
     public function deletePdf(\WP_REST_Request $request): \WP_REST_Response
@@ -171,6 +182,19 @@ class DocumentsController
             if ($contentDescription === '') {
                 $validationErrors[] = ['field' => 'content_description', 'message' => 'content_description is required.'];
             }
+        } elseif ($docTypeKey === 'spa') {
+            if ($clientName === '') {
+                $clientName = sanitize_text_field((string) ($payload['buyer_name'] ?? 'SPA Buyer'));
+            }
+            if ($cargoType === '') {
+                $cargoType = sanitize_text_field((string) ($payload['spa_title'] ?? 'Gold Bars'));
+            }
+            if ($clientEmail === '') {
+                $clientEmail = sanitize_email((string) ($payload['buyer_email'] ?? 'spa@example.com'));
+            }
+            if ($clientEmail === '' || !is_email($clientEmail)) {
+                $clientEmail = 'spa@example.com';
+            }
         } else {
             if ($clientName === '') {
                 $validationErrors[] = ['field' => 'client_name', 'message' => 'client_name is required.'];
@@ -192,10 +216,12 @@ class DocumentsController
             }
         }
 
-        if ($clientEmail === '') {
-            $validationErrors[] = ['field' => 'client_email', 'message' => 'client_email is required.'];
-        } elseif (!is_email($clientEmail)) {
-            $validationErrors[] = ['field' => 'client_email', 'message' => 'client_email must be a valid email address.'];
+        if ($docTypeKey !== 'spa') {
+            if ($clientEmail === '') {
+                $validationErrors[] = ['field' => 'client_email', 'message' => 'client_email is required.'];
+            } elseif (!is_email($clientEmail)) {
+                $validationErrors[] = ['field' => 'client_email', 'message' => 'client_email must be a valid email address.'];
+            }
         }
 
         if (!empty($validationErrors)) {

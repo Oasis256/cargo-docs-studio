@@ -16,6 +16,7 @@
     skrFormSections,
     invoiceFormSections,
     receiptFormSections,
+    spaFormSections,
     invoiceFieldUi,
     receiptFieldUi,
     skrFieldUi,
@@ -36,7 +37,7 @@
 
   function getDocType() {
     const value = (els.docType && els.docType.value) || "invoice";
-    return ["invoice", "receipt", "skr"].includes(value) ? value : "invoice";
+    return ["invoice", "receipt", "skr", "spa"].includes(value) ? value : "invoice";
   }
 
   function setPayloadDefaults(docType) {
@@ -89,6 +90,7 @@
     skrFormSections,
     invoiceFormSections,
     receiptFormSections,
+    spaFormSections,
     skrFieldUi,
     invoiceFieldUi,
     receiptFieldUi,
