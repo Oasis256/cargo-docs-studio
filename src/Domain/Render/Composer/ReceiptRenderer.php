@@ -30,13 +30,10 @@ class ReceiptRenderer
         $paymentReference = sanitize_text_field((string) ($payload['payment_reference'] ?? ''));
         $notes = sanitize_textarea_field((string) ($payload['notes'] ?? ''));
         $currency = strtoupper(sanitize_text_field((string) ($payload['currency'] ?? 'USD')));
-        $quantity = (float) ($payload['quantity'] ?? 1);
-        if ($quantity <= 0) {
-            $quantity = 1;
-        }
+        $legacyQuantity = (float) ($payload['quantity'] ?? 0);
         $cargoType = sanitize_text_field((string) ($payload['cargo_type'] ?? $payload['content_description'] ?? 'Cargo'));
-        $unitCost = (float) ($payload['taxable_value'] ?? 0);
-        $amount = isset($payload['amount_paid']) ? (float) $payload['amount_paid'] : (float) ($computed['grand_total'] ?? ($unitCost * $quantity));
+        $legacyUnitCost = (float) ($payload['taxable_value'] ?? 0);
+        $legacyAmountPaid = isset($payload['amount_paid']) ? (float) $payload['amount_paid'] : 0.0;
         $logoInput = (string) ($payload['company_logo_url'] ?? $payload['logo_url'] ?? '');
         $logoUrl = $this->images->resolveImageSource($logoInput);
         if ($logoUrl === '' && preg_match('#^https?://#i', $logoInput)) {
@@ -62,8 +59,6 @@ class ReceiptRenderer
         if ($paymentUri === '') {
             $paymentUri = 'receipt:' . $receiptNumber;
         }
-        $lineAmount = $unitCost * $quantity;
-
         $items = [];
         $hasLineItemsPayload = !empty($payload['line_items']) && is_array($payload['line_items']);
         $rawItemSets = [];
@@ -83,9 +78,13 @@ class ReceiptRenderer
                     continue;
                 }
                 $desc = sanitize_text_field((string) ($item['description'] ?? $item['cargo_type'] ?? $item['name'] ?? ''));
-                $itemUnit = (float) ($item['unit_cost'] ?? $item['unit_price'] ?? 0);
-                $itemQty = (float) ($item['quantity'] ?? 0);
+                $isOneTime = !empty($item['one_time']);
+                $itemUnit = (float) ($item['unit_cost'] ?? $item['unit_price'] ?? ($item['amount'] ?? 0));
+                $itemQty = $isOneTime ? 0.0 : (float) ($item['quantity'] ?? 0);
                 $itemAmount = isset($item['amount']) ? (float) $item['amount'] : (isset($item['total']) ? (float) $item['total'] : ($itemUnit * $itemQty));
+                if (!$isOneTime && $itemAmount <= 0 && $itemUnit > 0 && $itemQty > 0) {
+                    $itemAmount = $itemUnit * $itemQty;
+                }
                 if ($desc === '') {
                     continue;
                 }
@@ -94,6 +93,7 @@ class ReceiptRenderer
                     'unit' => $itemUnit,
                     'qty' => $itemQty,
                     'amount' => $itemAmount,
+                    'one_time' => $isOneTime,
                 ];
             }
             if (!empty($items)) {
@@ -101,19 +101,25 @@ class ReceiptRenderer
             }
         }
         if (empty($items)) {
+            $fallbackAmount = $legacyAmountPaid > 0
+                ? $legacyAmountPaid
+                : ((float) ($computed['grand_total'] ?? 0) > 0 ? (float) $computed['grand_total'] : ($legacyUnitCost * max($legacyQuantity, 1)));
+            $fallbackQty = $legacyQuantity > 0 ? $legacyQuantity : 0.0;
+            $isOneTimeFallback = $fallbackQty <= 0;
             $items[] = [
                 'description' => $cargoType,
-                'unit' => $unitCost,
-                'qty' => $quantity,
-                'amount' => $lineAmount,
+                'unit' => $isOneTimeFallback ? 0.0 : $legacyUnitCost,
+                'qty' => $isOneTimeFallback ? 0.0 : $fallbackQty,
+                'amount' => $fallbackAmount,
+                'one_time' => $isOneTimeFallback,
             ];
         }
-        if (count($items) === 1 && $amount > 0 && !$hasLineItemsPayload) {
+        if (count($items) === 1 && $legacyAmountPaid > 0 && !$hasLineItemsPayload) {
             if ((float) $items[0]['amount'] <= 0) {
-                $items[0]['amount'] = $amount;
+                $items[0]['amount'] = $legacyAmountPaid;
             }
-            if ((float) $items[0]['unit'] <= 0 && (float) $items[0]['qty'] > 0) {
-                $items[0]['unit'] = $amount / (float) $items[0]['qty'];
+            if ((float) $items[0]['unit'] <= 0 && (float) $items[0]['qty'] > 0 && empty($items[0]['one_time'])) {
+                $items[0]['unit'] = $legacyAmountPaid / (float) $items[0]['qty'];
             }
         }
 
@@ -121,20 +127,24 @@ class ReceiptRenderer
         $itemsTotal = 0.0;
         foreach ($items as $index => $item) {
             $itemsTotal += (float) $item['amount'];
-            $qtyLabel = rtrim(rtrim(number_format((float) $item['qty'], 3, '.', ''), '0'), '.');
-            if ($qtyLabel === '') {
-                $qtyLabel = '0';
+            $isOneTime = !empty($item['one_time']);
+            $qtyLabel = '-';
+            if (!$isOneTime) {
+                $qtyLabel = rtrim(rtrim(number_format((float) $item['qty'], 3, '.', ''), '0'), '.');
+                if ($qtyLabel === '') {
+                    $qtyLabel = '0';
+                }
             }
             $rowClass = ($index % 2 === 0) ? 'commodity-row-odd' : 'commodity-row-even';
             $rowsHtml .= '<tr class="' . esc_attr($rowClass) . '">
       <td>' . esc_html($item['description']) . '</td>
-      <td class="amount-right">$' . $this->formatter->formatSmart((float) $item['unit'], 2) . '</td>
+      <td class="amount-right">' . ($isOneTime ? '-' : ('$' . $this->formatter->formatSmart((float) $item['unit'], 2))) . '</td>
       <td class="center">' . esc_html($qtyLabel) . '</td>
       <td class="amount-right">$' . $this->formatter->formatSmart((float) $item['amount'], 2) . '</td>
     </tr>';
         }
-        $displayTotal = $hasLineItemsPayload ? $itemsTotal : ($amount > 0 ? $amount : $itemsTotal);
-        $displayTotalWords = $this->formatter->moneyToWords($displayTotal, $currency);
+        $displayTotal = $itemsTotal > 0 ? $itemsTotal : ($legacyAmountPaid > 0 ? $legacyAmountPaid : $itemsTotal);
+        $displayTotalWords = ucwords(strtolower($this->formatter->moneyToWords($displayTotal, $currency)));
 
         return '
 <!doctype html>
@@ -146,14 +156,15 @@ body{font-family:' . esc_attr($theme['font_family']) . ',Arial,sans-serif;margin
 .sheet{position:relative;padding:14px;}
 .watermark{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);width:56%;max-width:140mm;opacity:0.2;z-index:0;pointer-events:none;}
 .content{position:relative;z-index:1;}
-.content-main{padding-bottom:110px;}
+.content-main{padding-bottom:135px;}
 .header-table,.grid-table,.commodity-table,.foot-table{width:100%;border-collapse:collapse;}
-.header-table td{vertical-align:top;border:none;padding:0;}
-.header-wrap{position:relative;min-height:230px;margin-bottom:4px;}
-.header-center{text-align:center;padding-top:8px;}
-.header-meta{position:absolute;right:0;bottom:16px;text-align:right;}
-.logo{width:260px;height:auto;}
-.title{font-size:21pt;font-weight:700;letter-spacing:0.6px;color:#2d4360;margin:8px 0 0;}
+.header-table td{vertical-align:bottom;border:none;padding:0;}
+.header-wrap{margin-bottom:4px;}
+.header-left{text-align:left;vertical-align:bottom;}
+.header-center{text-align:center;vertical-align:bottom;}
+.header-right{text-align:right;vertical-align:bottom;}
+.logo{width:220px;height:auto;}
+.title{font-size:21pt;font-weight:700;letter-spacing:0.6px;color:#2d4360;margin:0;}
 .meta{font-size:10pt;text-align:right;line-height:1.35;}
 .accent-line{border-top:2px solid #f4a460;margin:8px 0 10px;}
 .sec-head{display:block;width:100%;box-sizing:border-box;background:#d2a272;color:#1f3550;font-weight:700;padding:8px 10px;border:1px solid #ddd;font-size:10pt;}
@@ -185,7 +196,15 @@ body{font-family:' . esc_attr($theme['font_family']) . ',Arial,sans-serif;margin
 .contact-bar .line-1{font-size:10pt;text-align:center;}
 .contact-bar .line-2{font-size:10pt;text-align:center;margin-top:4px;}
 .bottom-note{margin-top:8px;text-align:center;font-style:italic;font-size:11pt;}
-.receipt-footer{position:fixed;left:14px;right:14px;bottom:6mm;z-index:2;}
+.receipt-footer{
+position:fixed;
+left:0;
+right:0;
+bottom:0;
+z-index:2;
+padding:0 14px 4mm;
+box-sizing:border-box;
+}
 </style>
 </head>
 <body>
@@ -194,14 +213,20 @@ body{font-family:' . esc_attr($theme['font_family']) . ',Arial,sans-serif;margin
 <div class="content">
   <div class="content-main">
   <div class="header-wrap">
-    <div class="header-center">
-      ' . ($logoUrl !== '' ? '<img src="' . esc_attr($logoUrl) . '" class="logo" alt="Company Logo" />' : '') . '
-      <div class="title">' . esc_html($receiptTitle) . '</div>
-    </div>
-    <div class="header-meta">
-      <div class="meta" style="font-size:13pt;"><strong>Date:</strong> ' . esc_html($date) . '</div>
-      <div class="meta" style="font-size:13pt;"><strong>Receipt No:</strong> <span style="color:#df3f36;"><strong>' . esc_html($receiptNumber) . '</strong></span></div>
-    </div>
+    <table class="header-table">
+      <tr>
+        <td class="header-left" style="width:33.33%;">
+          ' . ($logoUrl !== '' ? '<img src="' . esc_attr($logoUrl) . '" class="logo" alt="Company Logo" />' : '') . '
+        </td>
+        <td class="header-center" style="width:33.33%;">
+          <div class="title">' . esc_html($receiptTitle) . '</div>
+        </td>
+        <td class="header-right" style="width:33.33%;">
+          <div class="meta" style="font-size:13pt;"><strong>Date:</strong> ' . esc_html($date) . '</div>
+          <div class="meta" style="font-size:13pt;"><strong>Receipt No:</strong> <span style="color:#df3f36;"><strong>' . esc_html($receiptNumber) . '</strong></span></div>
+        </td>
+      </tr>
+    </table>
   </div>
   <div class="accent-line"></div>
 
@@ -227,7 +252,7 @@ body{font-family:' . esc_attr($theme['font_family']) . ',Arial,sans-serif;margin
       <td class="amount-right">$' . $this->formatter->formatSmart($displayTotal, 2) . '</td>
     </tr>
     <tr class="receipt-total-words-row">
-      <td colspan="4"><strong>' . esc_html($displayTotalWords) . ' only.</strong></td>
+      <td colspan="4"><strong>' . esc_html($displayTotalWords) . ' Only.</strong></td>
     </tr>
   </table>
 

@@ -59,6 +59,8 @@
       row.className = "cds-line-item-row";
       row.setAttribute("data-line-item-row", "1");
 
+      const oneTime = !!(item && (item.one_time === true || item.one_time === 1 || item.one_time === "1"));
+
       const descriptionWrap = document.createElement("div");
       descriptionWrap.className = "cds-line-item-cell cds-line-item-cell-wide";
       const descriptionLabel = document.createElement("label");
@@ -84,7 +86,7 @@
       quantity.className = "cds-line-item-input";
       quantity.placeholder = "Qty";
       quantity.setAttribute("data-line-item-field", "quantity");
-      quantity.value = item && item.quantity != null && item.quantity !== "" ? String(item.quantity) : "";
+      quantity.value = oneTime ? "" : (item && item.quantity != null && item.quantity !== "" ? String(item.quantity) : "");
       quantityWrap.appendChild(quantityLabel);
       quantityWrap.appendChild(quantity);
 
@@ -98,9 +100,11 @@
       amount.step = "any";
       amount.className = "cds-line-item-input";
       amount.placeholder = "Amount";
-      amount.setAttribute("data-line-item-field", "total");
+      amount.setAttribute("data-line-item-field", "amount");
       let amountValue = "";
-      if (item && item.unit_price != null && item.unit_price !== "") {
+      if (oneTime && item && item.amount != null && item.amount !== "") {
+        amountValue = String(item.amount);
+      } else if (item && item.unit_price != null && item.unit_price !== "") {
         amountValue = String(item.unit_price);
       } else if (item && item.amount != null && item.amount !== "") {
         amountValue = String(item.amount);
@@ -114,6 +118,19 @@
       amount.value = amountValue;
       amountWrap.appendChild(amountLabel);
       amountWrap.appendChild(amount);
+
+      const modeWrap = document.createElement("div");
+      modeWrap.className = "cds-line-item-cell";
+      const modeLabel = document.createElement("label");
+      modeLabel.className = "cds-line-item-label";
+      modeLabel.textContent = "One-time";
+      const oneTimeInput = document.createElement("input");
+      oneTimeInput.type = "checkbox";
+      oneTimeInput.className = "cds-line-item-input";
+      oneTimeInput.setAttribute("data-line-item-field", "one_time");
+      oneTimeInput.checked = oneTime;
+      modeWrap.appendChild(modeLabel);
+      modeWrap.appendChild(oneTimeInput);
 
       const remove = document.createElement("button");
       remove.type = "button";
@@ -132,7 +149,19 @@
       row.appendChild(descriptionWrap);
       row.appendChild(quantityWrap);
       row.appendChild(amountWrap);
+      row.appendChild(modeWrap);
       row.appendChild(actionWrap);
+
+      const applyMode = () => {
+        const isOneTime = !!oneTimeInput.checked;
+        quantity.disabled = isOneTime;
+        quantity.placeholder = isOneTime ? "N/A" : "Qty";
+        if (isOneTime) {
+          quantity.value = "";
+        }
+      };
+      oneTimeInput.addEventListener("change", applyMode);
+      applyMode();
 
       return row;
     }
@@ -168,30 +197,44 @@
         .map((row) => {
           const descriptionNode = row.querySelector('[data-line-item-field="description"]');
           const quantityNode = row.querySelector('[data-line-item-field="quantity"]');
-          const amountNode = row.querySelector('[data-line-item-field="total"]');
+          const amountNode = row.querySelector('[data-line-item-field="amount"]');
+          const oneTimeNode = row.querySelector('[data-line-item-field="one_time"]');
 
           const description = descriptionNode ? String(descriptionNode.value || "").trim() : "";
-          const quantity = quantityNode ? coerceLineItemNumber(quantityNode.value) : "";
+          const isOneTime = !!(oneTimeNode && oneTimeNode.checked);
+          const quantity = isOneTime ? "" : (quantityNode ? coerceLineItemNumber(quantityNode.value) : "");
           const amount = amountNode ? coerceLineItemNumber(amountNode.value) : "";
           const unitPrice = amount === "" ? coerceLineItemNumber(row.dataset.lineItemUnitPrice || "") : amount;
           const legacyTotal = coerceLineItemNumber(row.dataset.lineItemTotal || "");
-          const total = (unitPrice !== "" && quantity !== "")
-            ? Number(unitPrice) * Number(quantity)
-            : legacyTotal;
+          const total = isOneTime
+            ? (amount === "" ? legacyTotal : Number(amount))
+            : ((unitPrice !== "" && quantity !== "") ? Number(unitPrice) * Number(quantity) : legacyTotal);
 
           if (description === "" && quantity === "" && total === "") {
             return null;
+          }
+
+          if (isOneTime) {
+            return {
+              description,
+              one_time: true,
+              quantity: "",
+              unit_price: "",
+              amount: total === "" ? 0 : total,
+              total: total === "" ? 0 : total,
+            };
           }
 
           let computedUnitPrice = unitPrice === "" ? 0 : unitPrice;
           if ((computedUnitPrice <= 0) && quantity !== "" && Number(quantity) > 0 && total !== "") {
             computedUnitPrice = Number(total) / Number(quantity);
           }
-
           return {
             description,
             quantity: quantity === "" ? 0 : quantity,
+            one_time: false,
             unit_price: computedUnitPrice,
+            amount: computedUnitPrice,
             total: total === "" ? 0 : total,
           };
         })
@@ -208,6 +251,9 @@
       }
       const descriptions = items.map((item) => String(item.description || "").trim()).filter(Boolean);
       const quantity = items.reduce((sum, item) => {
+        if (item && item.one_time) {
+          return sum;
+        }
         const value = Number(item.quantity || 0);
         return Number.isFinite(value) ? sum + value : sum;
       }, 0);
@@ -224,21 +270,42 @@
     function getLineItemsFromPayload(payload, key) {
       const items = payload && Array.isArray(payload[key]) ? payload[key] : [];
       if (items.length > 0) {
-        return items;
+        return items.map((item) => {
+          if (!item || typeof item !== "object") {
+            return item;
+          }
+          const mapped = Object.assign({}, item);
+          if (!Object.prototype.hasOwnProperty.call(mapped, "one_time")) {
+            mapped.one_time = false;
+          }
+          if (!Object.prototype.hasOwnProperty.call(mapped, "amount")) {
+            if (Object.prototype.hasOwnProperty.call(mapped, "unit_price")) {
+              mapped.amount = mapped.unit_price;
+            } else if (Object.prototype.hasOwnProperty.call(mapped, "total")) {
+              mapped.amount = mapped.total;
+            }
+          }
+          return mapped;
+        });
       }
 
       const description = payload && Object.prototype.hasOwnProperty.call(payload, "cargo_type") ? String(payload.cargo_type || "").trim() : "";
       const quantity = payload && Object.prototype.hasOwnProperty.call(payload, "quantity") ? coerceLineItemNumber(payload.quantity) : "";
-      const total = payload && Object.prototype.hasOwnProperty.call(payload, "taxable_value") ? coerceLineItemNumber(payload.taxable_value) : "";
+      const totalFromTaxable = payload && Object.prototype.hasOwnProperty.call(payload, "taxable_value") ? coerceLineItemNumber(payload.taxable_value) : "";
+      const totalFromAmountPaid = payload && Object.prototype.hasOwnProperty.call(payload, "amount_paid") ? coerceLineItemNumber(payload.amount_paid) : "";
+      const total = totalFromAmountPaid !== "" ? totalFromAmountPaid : totalFromTaxable;
       if (description === "" && quantity === "" && total === "") {
         return [];
       }
 
+      const oneTime = quantity === "" || Number(quantity) <= 0;
       return [{
         description,
-        quantity: quantity === "" ? 0 : quantity,
-        unit_price: total === "" ? 0 : total,
-        total: (quantity === "" || total === "") ? 0 : Number(quantity) * Number(total),
+        one_time: oneTime,
+        quantity: oneTime ? "" : quantity,
+        unit_price: oneTime ? "" : (total === "" ? 0 : total),
+        amount: total === "" ? 0 : total,
+        total: oneTime ? (total === "" ? 0 : total) : ((quantity === "" || total === "") ? 0 : Number(quantity) * Number(total)),
       }];
     }
 

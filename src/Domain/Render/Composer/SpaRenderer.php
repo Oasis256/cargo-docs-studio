@@ -16,11 +16,14 @@ class SpaRenderer
     public function render(array $payload): string
     {
         $logoCandidate = (string) ($payload['spa_logo_url'] ?? $payload['company_logo_url'] ?? $payload['logo_url'] ?? '');
-        $logoUrl = $this->images->resolveImageSource($logoCandidate);
+        $logoUrl = $this->sanitizeRenderableImage($this->images->resolveImageSource($logoCandidate));
         $watermarkEnabled = !empty($payload['watermark_enabled']);
-        $watermarkUrl = $watermarkEnabled
-            ? $this->images->resolveImageSource((string) ($payload['watermark_url'] ?? ''))
-            : '';
+        $watermarkUrl = '';
+        if ($watermarkEnabled) {
+            $watermarkUrl = $this->sanitizeRenderableImage(
+                $this->images->resolveImageSource((string) ($payload['watermark_url'] ?? ''))
+            );
+        }
         $sellerInitials = sanitize_text_field((string) ($payload['seller_initials'] ?? "Seller's Initials"));
         $buyerInitials = sanitize_text_field((string) ($payload['buyer_initials'] ?? "Buyer's Initials"));
 
@@ -28,16 +31,7 @@ class SpaRenderer
         $textBlocks = $this->normalizeTextBlocks($payload['spa_text_walls'] ?? []);
         $imageBlocks = $this->normalizeImageBlocks($payload['spa_images'] ?? []);
 
-        $pages = [];
-        foreach ($tableBlocks as $block) {
-            $pages[] = $this->renderTablePage($block, $logoUrl, $watermarkUrl, $sellerInitials, $buyerInitials);
-        }
-        foreach ($textBlocks as $block) {
-            $pages[] = $this->renderTextPage($block, $logoUrl, $watermarkUrl, $sellerInitials, $buyerInitials);
-        }
-        foreach ($imageBlocks as $block) {
-            $pages[] = $this->renderImagePage($block, $logoUrl, $watermarkUrl, $sellerInitials, $buyerInitials);
-        }
+        $pages = $this->buildPages($payload, $tableBlocks, $textBlocks, $imageBlocks, $logoUrl, $watermarkUrl, $sellerInitials, $buyerInitials);
 
         if (empty($pages)) {
             $pages[] = $this->renderTextPage([
@@ -191,7 +185,9 @@ class SpaRenderer
         }
         $watermarkHtml = $watermarkUrl !== '' ? '<img class="spa-watermark" src="' . esc_attr($watermarkUrl) . '" alt="" />' : '';
 
-        return '<section class="spa-page"><div class="spa-page-inner">' .
+        return '<section class="spa-page">' .
+            '<div class="spa-rail-orange"></div><div class="spa-rail-blue"></div>' .
+            '<div class="spa-page-inner">' .
             $watermarkHtml .
             '<header class="spa-header">' . $logoHtml . '</header>';
     }
@@ -209,15 +205,36 @@ class SpaRenderer
     private function styles(): string
     {
         return '
-@page { margin: 8mm; }
+@page { margin: 0; }
 html, body { margin: 0; padding: 0; font-family: DejaVu Sans, sans-serif; color: #111; font-size: 12px; }
-.spa-page { position: relative; page-break-after: always; background: #fff; }
-.spa-page:last-child { page-break-after: auto; }
+.spa-page { position: relative; min-height: 297mm; page-break-inside: avoid; background: #fff; }
+.spa-page + .spa-page { page-break-before: always; }
+.spa-rail-orange {
+  position: absolute;
+  top: 0;
+  left: 8mm;
+  width: 7mm;
+  height: 100%;
+  background: #f28b3c;
+  z-index: 0;
+}
+.spa-rail-blue {
+  position: absolute;
+  top: 0;
+  left: 16.2mm;
+  width: 0.8mm;
+  height: 26mm;
+  background: #123a75;
+  z-index: 0;
+}
 .spa-page-inner {
   position: relative;
   box-sizing: border-box;
-  padding: 12mm 10mm 10mm 24mm;
-  background: linear-gradient(to right, #f28b3c 0, #f28b3c 7mm, #ffffff 7mm, #ffffff 7.8mm, #123a75 7.8mm, #123a75 8.4mm, #ffffff 8.4mm, #ffffff 100%);
+  min-height: 297mm;
+  padding: 12mm 12mm 12mm 24mm;
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
 }
 .spa-header { margin: 0 0 8mm 0; position: relative; z-index: 2; }
 .spa-logo { width: 48mm; height: auto; display: block; }
@@ -255,17 +272,93 @@ h2 {
 .spa-image-wrap { position: relative; z-index: 2; }
 .spa-image-wrap img {
   width: 100%;
-  max-height: 200mm;
+  max-height: 210mm;
   object-fit: contain;
   display: block;
 }
 .spa-footer {
-  margin-top: 10mm;
+  margin-top: auto;
+  padding-top: 8mm;
   display: flex;
   justify-content: space-between;
   font-size: 10pt;
+  position: relative;
   z-index: 2;
 }
 ';
+    }
+
+    private function buildPages(
+        array $payload,
+        array $tableBlocks,
+        array $textBlocks,
+        array $imageBlocks,
+        string $logoUrl,
+        string $watermarkUrl,
+        string $sellerInitials,
+        string $buyerInitials
+    ): array {
+        $pages = [];
+        $orderRaw = $payload['spa_block_order'] ?? [];
+        $order = $this->decodeIfJson($orderRaw);
+
+        if (is_array($order) && !empty($order)) {
+            foreach ($order as $entry) {
+                $token = sanitize_text_field((string) $entry);
+                if ($token === '') {
+                    continue;
+                }
+                $parts = explode(':', strtolower($token), 2);
+                if (count($parts) !== 2) {
+                    continue;
+                }
+                $type = $parts[0];
+                $index = (int) $parts[1];
+                if ($index < 0) {
+                    continue;
+                }
+                if ($type === 'table' && isset($tableBlocks[$index])) {
+                    $pages[] = $this->renderTablePage($tableBlocks[$index], $logoUrl, $watermarkUrl, $sellerInitials, $buyerInitials);
+                    continue;
+                }
+                if ($type === 'text' && isset($textBlocks[$index])) {
+                    $pages[] = $this->renderTextPage($textBlocks[$index], $logoUrl, $watermarkUrl, $sellerInitials, $buyerInitials);
+                    continue;
+                }
+                if ($type === 'image' && isset($imageBlocks[$index])) {
+                    $pages[] = $this->renderImagePage($imageBlocks[$index], $logoUrl, $watermarkUrl, $sellerInitials, $buyerInitials);
+                }
+            }
+            if (!empty($pages)) {
+                return $pages;
+            }
+        }
+
+        foreach ($tableBlocks as $block) {
+            $pages[] = $this->renderTablePage($block, $logoUrl, $watermarkUrl, $sellerInitials, $buyerInitials);
+        }
+        foreach ($textBlocks as $block) {
+            $pages[] = $this->renderTextPage($block, $logoUrl, $watermarkUrl, $sellerInitials, $buyerInitials);
+        }
+        foreach ($imageBlocks as $block) {
+            $pages[] = $this->renderImagePage($block, $logoUrl, $watermarkUrl, $sellerInitials, $buyerInitials);
+        }
+
+        return $pages;
+    }
+
+    private function sanitizeRenderableImage(string $src): string
+    {
+        $src = trim($src);
+        if ($src === '') {
+            return '';
+        }
+        if (str_starts_with($src, 'data:image/')) {
+            return $src;
+        }
+        if (file_exists($src)) {
+            return $src;
+        }
+        return '';
     }
 }

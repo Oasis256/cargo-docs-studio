@@ -38,7 +38,7 @@ const payloadDefaults = {
       cargo_type: "Paid Cargo",
       currency: "USD",
       line_items: [
-        { description: "Paid Cargo", quantity: 1 },
+        { description: "Paid Cargo", quantity: 1, amount: 500, one_time: false },
       ],
       payment_method: "Bitcoin",
       payment_reference: "",
@@ -49,8 +49,6 @@ const payloadDefaults = {
       bank_account_name: "WAKALA MINERALS LIMITED",
       bank_swift_code: "ECOCUGKA",
       bank_address: "PLOT 8A KAFU ROAD KAMPALA UGANDA",
-      quantity: 1,
-      taxable_value: 500,
       company_phone: "+256-765242719",
       company_email: "info@wakalaminerals.com",
       company_website: "www.wakalaminerals.com",
@@ -101,9 +99,6 @@ const payloadDefaults = {
       bitcoin_enabled: false,
     },
     spa: {
-      client_name: "SPA Buyer",
-      client_email: "spa@example.com",
-      cargo_type: "Gold Bars",
       company_logo_url: "https://inds.soothingspotspa.care/wp-content/uploads/2026/02/WakalaNew.png",
       watermark_enabled: false,
       watermark_url: "",
@@ -638,9 +633,6 @@ Seller’s Initials`,
       { key: "spa_images", label: "Image Blocks (JSON)", type: "textarea", required: false },
       { key: "seller_initials", label: "Seller Initials Label", type: "text", required: false },
       { key: "buyer_initials", label: "Buyer Initials Label", type: "text", required: false },
-      { key: "client_name", label: "Client Name (Validation)", type: "text", required: false },
-      { key: "client_email", label: "Client Email (Validation)", type: "email", required: false },
-      { key: "cargo_type", label: "Cargo Type (Validation)", type: "text", required: false },
     ],
   };
   window.CDS_DOCS_DEFAULTS = {
